@@ -1,0 +1,29 @@
+Arduino MAX7219/7221 Library
+
+Written by Eberhard Fahle in 2007
+
+To the furthest extent that this is legally possible, the fork maintained by 
+Radu - Eosif Mihailescu and published here https://github.com/csdexter/MAX7219
+is hereby released under the LGPL version 3.
+To the furthest extent that this is legally enforceable, the copyright remains
+with the authors listed above.
+
+See the example sketches to learn how to use the library in your code.
+
+HARDWARE NOTES:
+ * The MAX7219/7221 are 5V I/O driver chips that power their loads from the
+   digital 5V rail. This means you will need to find another power supply to
+   feed the MAX if you plan to use more than one of them (the power regulator
+   on the Uno/Mega can take 1 MAX + a 64 LED matrix, but not more). This also
+   means a lot of noise will be induced in the digital domain of your project
+   if you don't take appropriate measures by installing the two filtering
+   capacitors show in the documentation. This also means level shifters will
+   be needed if you want to talk to the MAX from a 3.3V I/O Arduino.
+ * Quick connection reference:
+   MAX7219/7221 -> Arduino:
+     DIN       -> MOSI    (Arduino output)
+     CLK       -> SCK     (Arduino output)
+     LOAD/#CS  -> SS      (Arduino output)
+
+For general questions and updates on this library please contact the fork
+maintainer at <radu.mihailescu@linux360.ro>.
