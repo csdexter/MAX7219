@@ -1,0 +1,147 @@
+body {
+ 	font-family:helvetica, arial, sans;
+	voice-family: "\"}\"";
+	voice-family: inherit;
+ 	background : #FFF;	
+	color: #000;
+	quotes: "\201C" "\201D" "\2018" "\2019";
+	align: center;
+	padding : 0ex;
+	margin : 0ex;
+	top: 0px;
+}
+
+/* Set styles for headlines */
+h1 {
+	font-size: 1.6em;
+	letter-spacing: .1em;
+}
+
+h2 {
+	font-size: 1.4em;
+	letter-spacing: .1em;
+}
+
+h3 {
+	font-size: 1.2em;
+	letter-spacing: .1em;
+}
+
+h4 {
+ 	font-size: 1em;
+	font-weight: bold;
+	letter-spacing: .1em;
+}
+/* A h5 headline uses plain text */
+h5 {
+	font-weight: bold;
+}
+
+/* There is a header on top in a div of its own */
+#header {
+	position: static;
+	top: 0px;
+	left: 0px;
+	/* height : 90px; */
+	color : #000;
+	background-image : url("arduino7small.jpg"); 
+	background-repeat: no-repeat;
+	background-position: center;
+	background-color : #FFF;
+	color : #FFF;
+	border-width : thin;
+	border-bottom-style : solid; 
+}
+
+/* We want some indent on the text in the header, and we want all line the same size */
+#header h1, #header h2, #header h3  {
+	font-size: 1.6em;
+	letter-spacing: .1em;
+	color: #444;
+	padding-left:1ex; 
+	margin-left:0.5ex;
+ 	margin-top : 5px;
+	margin-bottom : 0px;		 
+	padding-top : 0px;
+	padding-bottom : 0px;		 
+}
+
+/* If we create a toc it should end with a rule */
+#toc {
+	margin-left:0ex;
+	margin-top:0ex;
+	margin-right:0ex;
+	margin-bottom:0ex;
+	
+	left: 0px;
+	color : #000;
+	background-position: top;
+	background-color : #FFF;
+	border-width : thin;
+	border-bottom-style : none;
+}
+
+
+/* This is the actual content of the page */
+#body {
+	position : absolute;
+	padding-left:1ex; 
+	margin-left:1ex;
+	margin-top:0ex;
+	margin-right:1ex;
+	margin-bottom:0ex;
+	font-size : 100%;
+	color : #444;
+	background : #FFF;
+	border-width : thin;
+	border-style : none;
+}
+
+/* code fragments in the content live in small gray boxes */
+#body pre {
+	font-family: 'Andale Mono', courier, monospace;
+	font-size:90%;
+	font-weight:normal;
+	color: #0;
+        margin-left:4ex;
+        margin-right:4ex;
+        padding-left:2ex;
+        padding-rigth:2ex;
+	background-color: #eee;
+	border-width : thin;
+	border-style : solid;
+}
+
+#body a:link {
+	color: #0AF;
+	font-weight: bold;
+	text-decoration: none;
+}
+
+#body a:visited {
+	color: #00F;
+	font-weight: bold;
+	text-decoration: none;
+}
+
+#body a:link:hover, a:visited:hover {
+	text-decoration: underline;
+}
+
+#body code {
+	font-family: 'Andale Mono', courier, monospace;
+	font-weight: bold;
+	color: #0;
+}
+	
+#body dl dt {
+        margin-left:2ex;
+	font-weight: bold;
+	font-style: italic;
+}
+
+#body dl dd {
+        margin-left:6ex;
+        margin-right:6ex;
+}
+
