@@ -1,6 +1,5 @@
 /*
-  LedControl.cpp - A library for controling Led Digits or 
-  Led arrays with a MAX7219/MAX7221
+  LedControl.cpp - A library for controling Leds with a MAX7219/MAX7221
   Copyright (c) 2007 Eberhard Fahle
 
   This library is free software; you can redistribute it and/or
@@ -18,10 +17,9 @@
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include "WProgram.h"
 #include "LedControl.h"
 
-//the opcodes the MAX7221 and MAX7219 understand
+//the opcodes for the MAX7221 and MAX7219
 #define OP_NOOP   0
 #define OP_DIGIT0 1
 #define OP_DIGIT1 2
