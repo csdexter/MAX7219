@@ -18,13 +18,60 @@ HARDWARE NOTES:
    on the Uno/Mega can take 1 MAX + a 64 LED matrix, but not more). This also
    means a lot of noise will be induced in the digital domain of your project
    if you don't take appropriate measures by installing the two filtering
-   capacitors show in the documentation. This also means level shifters will
+   capacitors shown in the datasheet. This also means level shifters will
    be needed if you want to talk to the MAX from a 3.3V I/O Arduino.
  * Quick connection reference:
    MAX7219/7221 -> Arduino:
      DIN       -> MOSI    (Arduino output)
      CLK       -> SCK     (Arduino output)
      LOAD/#CS  -> SS      (Arduino output)
+   MAX7219/7221 -> LEDs:
+     for 7 segment -> digit 0 is the leftmost one (MSB) and digit 7 is the
+                      rightmost (LSB)
+     for bar graph -> column 0 is the leftmost one, dot 1 (the one that lights
+                      up when you write a value of 1 or when you call
+                      zeroDisplay()) is the bottom one (wired to SEGG)
+     for matrix    -> pixel (0, 0) (the one that lights up when you write a
+                      value of {0x01, 0x00, ...} or when you call
+                      zeroDisplay()) is the bottom left one (wired to DIG0,
+                      SEGG)
+   For chaining MAX7219/7221s:
+     DOUT(n)     -> DIN(n+1)  (MAX7219 output to MAX7219 input)
+     DIN(1)      -> MOSI      (Arduino output)
+     CLK(*)      -> SCK       (Arduino outputs, may require a buffer if you go
+     LOAD/#CS(*) -> SS         past the sinking capability of the Arduino)
+     addressing  -> chip 0 is the one closest to the Arduino
+
+LIBRARY NOTES:
+ * Due to the fact that we usually work with displays made up of a collection
+   of MAX7219 digits as opposed to single digits, this library uses the
+   concept of topology elements. All data display methods operate on said
+   topology elements instead of single digits. Of course, controlling each
+   individual segment of each individual digit (while at the same time being
+   able to refer to each discrete digit) is still possible if you declare your
+   topology to be a collection of matrices, each one spanning a single digit.
+   In so doing, each topology element gets mapped to a MAX7219 digit and
+   offers direct access to its component segments.
+ * The topology pointer passed to begin() is only being read from and thus
+   declared and treated as const. The structure is organized like a linked
+   list of lists, with the sole difference that it uses the .length member
+   and not a NULL value to control size. The first level is the topology
+   elements, the second one is the chips and the third one is the digits. The
+   first and second levels behave identically in what the data structure is
+   concerned, the third level will be a byte[] for all types except 
+   MAX7219_MODE_NC where only the length is used from the upper level and the
+   .data/.list members are ignored.
+ * All topology elements can span chips (i.e. you could have a 4-digit
+   7-segment display made up of the last two digits of chip 2 and the first
+   two digits of chip 3); with the sole exception of MAX7219_MODE_NC which
+   must also end on a chip boundary due to the way scanning limit is
+   implemented in the chip. All topology elements must be contiguous (i.e. you
+   can't have the first and the last digit on chip 0 make up a 2-digit
+   7-segment display).
+ * All data display functions take a pointer to the data to be displayed as a
+   parameter. The length of data read from that pointer depends on the size in
+   MAX7219 digits of the target topology element; for example a set7Segment()
+   call targeting a 4-digit topology element will attempt to read 4 bytes.
 
 For general questions and updates on this library please contact the fork
 maintainer at <radu.mihailescu@linux360.ro>.

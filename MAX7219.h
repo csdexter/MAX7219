@@ -43,14 +43,14 @@
 
 //Define MAX7219 Register codes
 #define MAX7219_REG_NOOP 0x00
-#define MAX7219_REG_DIG0 0x01
-#define MAX7219_REG_DIG1 0x02
-#define MAX7219_REG_DIG2 0x03
-#define MAX7219_REG_DIG3 0x04
-#define MAX7219_REG_DIG4 0x05
-#define MAX7219_REG_DIG5 0x06
-#define MAX7219_REG_DIG6 0x07
-#define MAX7219_REG_DIG7 0x08
+#define MAX7219_REG_DIGIT0 0x01
+#define MAX7219_REG_DIGIT1 0x02
+#define MAX7219_REG_DIGIT2 0x03
+#define MAX7219_REG_DIGIT3 0x04
+#define MAX7219_REG_DIGIT4 0x05
+#define MAX7219_REG_DIGIT5 0x06
+#define MAX7219_REG_DIGIT6 0x07
+#define MAX7219_REG_DIGIT7 0x08
 #define MAX7219_REG_DECODEMODE 0x09
 #define MAX7219_REG_INTENSITY 0x0A
 #define MAX7219_REG_SCANLIMIT 0x0B
@@ -103,13 +103,28 @@ typedef struct _MAX7219_Topology {
     }
 } MAX7219_Topology;
 
-#define MAX7219_DEFAULT_TOPOLOGY {.ID = MAX7219_MODE_7SEGMENT, 
-                                  .length = 1, 
-                                  .list = {.ID = 0, 
-                                           .length = 8, 
-                                           .data = {0, 1, 2, 3, 4, 5, 6, 7}
-                                           }
-                                  };
+#define MAX7219_7SEGMENT_TOPOLOGY {.ID = MAX7219_MODE_7SEGMENT, \
+                                   .length = 1, \
+                                   .list = {.ID = 0, \
+                                            .length = 8, \
+                                            .data = {0, 1, 2, 3, 4, 5, 6, 7} \
+                                            } \
+                                   }
+#define MAX7219_MATRIX_TOPOLOGY {.ID = MAX7219_MODE_MATRIX, \
+                                 .length = 1, \
+                                 .list = {.ID = 0, \
+                                          .length = 8, \
+                                          .data = {0, 1, 2, 3, 4, 5, 6, 7} \
+                                          } \
+                                 }
+#define MAX7219_BARGRAPH_TOPOLOGY {.ID = MAX7219_MODE_BARGRAPH, \
+                                   .length = 1, \
+                                   .list = {.ID = 0, \
+                                            .length = 8, \
+                                            .data = {0, 1, 2, 3, 4, 5, 6, 7} \
+                                            } \
+                                   }
+#define MAX7219_DEFAULT_TOPOLOGY MAX7219_7SEGMENT_TOPOLOGY
 
 class MAX7219 
 {
@@ -123,9 +138,8 @@ class MAX7219
         *   pinLOAD - digital pin to which LOAD/#CS is wired to, defaults to
         *             SPI SS
         */
-        MAX7219(byte pinLOAD = MAX7219_PIN_LOAD) { _pinLOAD = pinLOAD;
-                                                   _topology = NULL };
-        
+        MAX7219(byte pinLOAD = MAX7219_PIN_LOAD) { _pinLOAD = pinLOAD };
+
         /*
         * Description:
         *   This is the destructor, it simply calls end().
@@ -137,8 +151,10 @@ class MAX7219
         *   Sets the topology of the display.
         * Parameters:
         *   topology - topology to use, default topology assumed if ignored
+        *   length   - number of topology elements described
         */
-        void begin(MAX7219_Topology *topology = NULL);
+        void begin(const MAX7219_Topology *topology = NULL, 
+                   const byte length = 1);
 
         /*
         * Description:
@@ -148,30 +164,50 @@ class MAX7219
 
         /*
         * Description:
-        *   Gets the number of devices attached to this driver, as
+        *   Gets the total number of devices attached to this driver, as
         *   extrapolated from the current topology.
         */
-        byte getChipCount(void);
-
+        byte getChipCount(void) { return _chips };
+        
         /* 
         * Description:
         *   Sets the selected chip to shutdown/powered mode
         * Parameters:
         * 	chip - the index of the chip to control
         */
-        void shutdown(byte chip = 0);
-        void noShutdown(byte chip = 0);
+        void shutdown(byte chip = 0) {
+            writeRegister(MAX7219_REG_SHUTDOWN, MAX7219_FLG_SHUTDOWN, chip);
+        };
+        void noShutdown(byte chip = 0) {
+            writeRegister(MAX7219_REG_SHUTDOWN, 0x00, chip);
+        };
 
         /* 
         * Description:
-        *   Set the number of digits (or rows) to be displayed by the selected
-        *   chip. See datasheet for side effects of the scanlimit on the
-        *   brightness of the display.
+        *   Sets the selected chip to display test/normal mode
         * Parameters:
-        *   limit - number of digits to be scanned (1..8)
+        * 	chip - the index of the chip to control
+        */
+        void displayTest(byte chip = 0) {
+            writeRegister(MAX7219_REG_DISPLAYTEST, MAX7219_FLG_DISPLAYTEST, 
+                          chip);
+        };
+        void noDisplayTest(byte chip = 0) {
+            writeRegister(MAX7219_REG_DISPLAYTEST, 0x00, chip);
+        };
+
+        /* 
+        * Description:
+        *   Set the number of digits, bargraph columns or matrix rows to be
+        *   scanned by the selected chip. See datasheet for side effects of
+        *   the scan limit on the brightness of the display.
+        * Parameters:
+        *   limit - number of digits to be scanned-1 (0..7)
         *   chip  - the index of the chip to control
         */
-        void setScanLimit(byte limit, byte chip = 0);
+        void setScanLimit(byte limit, byte chip = 0) {
+            writeRegister(MAX7219_REG_SCANLIMIT, limit, chip);
+        };
 
         /* 
         * Description:
@@ -180,7 +216,9 @@ class MAX7219
         *   intensity - the brightness of the display (0..15)
         *   addr      - the index of the chip to control
         */
-        void setIntensity(byte intensity, byte chip = 0);
+        void setIntensity(byte intensity, byte chip = 0) {
+            writeRegister(MAX7219_REG_INTENSITY, intensity, chip);
+        };
 
         /* 
         * Description:
@@ -195,7 +233,7 @@ class MAX7219
         *   Reset topology element to a meaningful zero. This involves
         *   displaying an actual 0 on 7-segment displays, turning only the
         *   first bottom line on on bargraphs and displaying just a single
-        *   pixel in the upper left corner on matrices.
+        *   pixel in the bottom left corner on matrices.
         */
         void zeroDisplay(byte topo = 0);
         
@@ -204,7 +242,8 @@ class MAX7219
         *   Displays the given number on the given topology element, 
         *   previously configured as a 7-segment display.
         * Parameters:
-        *   number - [0-9-.EeHhLlPp ]
+        *   number - [0-9-EeHhLlPp ]. Set bit 7 on any character whose
+        *            corresponding digit should have DP on.
         *   topo   - topology element to update (must be 7-segment)
         */
         void set7Segment(char *number, byte topo = 0);
@@ -232,19 +271,36 @@ class MAX7219
 
     private:
         MAX7219_Topology *_topology;
-        byte _pinLOAD;
+        byte _pinLOAD, _elements, _chips;
         
         /*
         * Description:
-        *   Write to one of the chip registers via SPI
+        *   Write to one of the chip registers, on a single chip, via SPI.
         */
         void writeRegister(byte addr, byte value, byte chip = 0);
+
+        /*
+        * Description:
+        *   Write to one of the chip registers, on multiple chips, via SPI.
+        * Parameters:
+        *   registers - data to be written
+        *   size      - length of data to be written
+        *   chip      - chip index to start writing at
+        */
+        void writeRegisters(word *registers, byte size, byte chip = 0);
+        
+        /*
+        * Descriptions:
+        *   Sets consecutive digits in a topology element to the given raw
+        *   values.
+        */
+        void setDigits(byte *values, byte topo = 0);
         
         /*
         * Description:
-        *   Set a raw digit to a raw value
+        *   Counts the number of digits spanned by a topology element.
         */
-        void setDigit(byte digit, byte value, byte chip = 0);
+        word getDigitCount(byte topo = 0);
 };
 
 #endif

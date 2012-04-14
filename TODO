@@ -1,5 +1,7 @@
-* switch to hardware SPI
-* do away with "I'M IN UR FONTS" smartness -- the 7219 has a character generator, use it!
-* add bargraph support
-* add setMode() interface (7-segment, matrix, bargraph)
-* add some graphic primitives
+- add some graphic primitives in a separate class (GDI-like) that would use MAX7219 as a display driver
+- related to the above, implement spectrum analyzer specifics for bargraph mode (decay, peaks)
+- related to the above, implement fonts via providers (dependency injection) for matrix and 7 segment
+- add HAL support for shift registers, used when routing LOAD/#CS via one of those
+- add SPI arbitrator support
+- add support for 14 and 16 -segment mode
+- implement external element controllers, mainly for animations ticked off from loop(). Rotating dash, spinning zero and scanning bargraph come to mind. Blinking cursor (on matrices) also seems like a good candidate.

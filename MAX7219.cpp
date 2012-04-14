@@ -29,173 +29,233 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "LedControl.h"
+#include "MAX7219.h"
 
-LedControl::LedControl(int dataPin, int clkPin, int csPin, int numDevices) {
-    SPI_MOSI=dataPin;
-    SPI_CLK=clkPin;
-    SPI_CS=csPin;
-    if(numDevices<=0 || numDevices>8 )
-	numDevices=8;
-    maxDevices=numDevices;
-    pinMode(SPI_MOSI,OUTPUT);
-    pinMode(SPI_CLK,OUTPUT);
-    pinMode(SPI_CS,OUTPUT);
-    digitalWrite(SPI_CS,HIGH);
-    SPI_MOSI=dataPin;
-    for(int i=0;i<64;i++) 
-	status[i]=0x00;
-    for(int i=0;i<maxDevices;i++) {
-	spiTransfer(i,OP_DISPLAYTEST,0);
-	//scanlimit is set to max on startup
-	setScanLimit(i,7);
-	//decode is done in source
-	spiTransfer(i,OP_DECODEMODE,0);
-	clearDisplay(i);
-	//we go into shutdown-mode on startup
-	shutdown(i,true);
-    }
-}
+#include <SPI.h>
 
-int LedControl::getDeviceCount() {
-    return maxDevices;
-}
-
-void LedControl::shutdown(int addr, bool b) {
-    if(addr<0 || addr>=maxDevices)
-	return;
-    if(b)
-	spiTransfer(addr, OP_SHUTDOWN,0);
-    else
-	spiTransfer(addr, OP_SHUTDOWN,1);
-}
-	
-void LedControl::setScanLimit(int addr, int limit) {
-    if(addr<0 || addr>=maxDevices)
-	return;
-    if(limit>=0 || limit<8)
-    	spiTransfer(addr, OP_SCANLIMIT,limit);
-}
-
-void LedControl::setIntensity(int addr, int intensity) {
-    if(addr<0 || addr>=maxDevices)
-	return;
-    if(intensity>=0 || intensity<16)	
-	spiTransfer(addr, OP_INTENSITY,intensity);
+void MAX7219::begin(const MAX7219_Topology *topology, const byte length) {
+    static const MAX7219_Topology defaultTopo = MAX7219_DEFAULT_TOPOLOGY;
     
-}
-
-void LedControl::clearDisplay(int addr) {
-    int offset;
-
-    if(addr<0 || addr>=maxDevices)
-	return;
-    offset=addr*8;
-    for(int i=0;i<8;i++) {
-	status[offset+i]=0;
-	spiTransfer(addr, i+1,status[offset+i]);
-    }
-}
-
-void LedControl::setLed(int addr, int row, int column, boolean state) {
-    int offset;
-    byte val=0x00;
-
-    if(addr<0 || addr>=maxDevices)
-	return;
-    if(row<0 || row>7 || column<0 || column>7)
-	return;
-    offset=addr*8;
-    val=B10000000 >> column;
-    if(state)
-	status[offset+row]=status[offset+row]|val;
-    else {
-	val=~val;
-	status[offset+row]=status[offset+row]&val;
-    }
-    spiTransfer(addr, row+1,status[offset+row]);
-}
-	
-void LedControl::setRow(int addr, int row, byte value) {
-    int offset;
-    if(addr<0 || addr>=maxDevices)
-	return;
-    if(row<0 || row>7)
-	return;
-    offset=addr*8;
-    status[offset+row]=value;
-    spiTransfer(addr, row+1,status[offset+row]);
-}
+    if(topology) _topology = topology;
+    else _topology = defaultTopo;
     
-void LedControl::setColumn(int addr, int col, byte value) {
-    byte val;
-
-    if(addr<0 || addr>=maxDevices)
-	return;
-    if(col<0 || col>7) 
-	return;
-    for(int row=0;row<8;row++) {
-	val=value >> (7-row);
-	val=val & 0x01;
-	setLed(addr,row,col,val);
-    }
-}
-
-void LedControl::setDigit(int addr, int digit, byte value, boolean dp) {
-    int offset;
-    byte v;
-
-    if(addr<0 || addr>=maxDevices)
-	return;
-    if(digit<0 || digit>7 || value>15)
-	return;
-    offset=addr*8;
-    v=charTable[value];
-    if(dp)
-	v|=B10000000;
-    status[offset+digit]=v;
-    spiTransfer(addr, digit+1,v);
+    _chips = 0;
+    for(int i = 0; i < length; i++) 
+        for(int j = 0; j < _topology[i].length; j++)
+            if(_topology[i].list[j].ID > _chips) 
+                _chips = _topology[i].list[j].ID;
+    _chips++;
     
-}
-
-void LedControl::setChar(int addr, int digit, char value, boolean dp) {
-    int offset;
-    byte index,v;
-
-    if(addr<0 || addr>=maxDevices)
-	return;
-    if(digit<0 || digit>7)
- 	return;
-    offset=addr*8;
-    index=(byte)value;
-    if(index >127) {
-	//nothing define we use the space char
-	value=32;
+    SPI.begin();
+    SPI.setBitOrder(MSBFIRST);
+    SPI.setDataMode(SPI_MODE0);
+    //1MHz suffices for doing 25fps to 625 chained chips driving 8x8 matrices,
+    //2MHz (as you would get on the Uno/Mega) is twice that and if you find
+    //yourself needing more, you shouldn't be using Arduino anyway
+    SPI.setClockDivider(SPI_CLOCK_DIV8);
+    
+    for(int i = 0; i < _chips; i++) {
+        noDisplayTest(i);
+        setScanLimit(0x07, i);
+        setIntensity(0x08, i);
     }
-    v=charTable[index];
-    if(dp)
-	v|=B10000000;
-    status[offset+digit]=v;
-    spiTransfer(addr, digit+1,v);
+    
+    for(int i = 0; i < _elements; i++) {
+        clearDisplay(i);
+        if(_topology[i].ID == MAX7219_MODE_NC) 
+            setScanLimit(0x07 - _topology[i].list[0].length, 
+                         _topology[i].list[0].ID);
+    }
 }
 
-void LedControl::spiTransfer(int addr, volatile byte opcode, volatile byte data) {
-    //Create an array with the data to shift out
-    int offset=addr*2;
-    int maxbytes=maxDevices*2;
+void MAX7219::end(void) {
+    for(int i = 0; i < _elements; i++) clearDisplay(i);
+    for(int i = 0; i < getChipCount(); i++) shutdown(i);
+}
 
-    for(int i=0;i<maxbytes;i++)
-	spidata[i]=(byte)0;
-    //put our device data into the array
-    spidata[offset+1]=opcode;
-    spidata[offset]=data;
-    //enable the line 
-    digitalWrite(SPI_CS,LOW);
-    //Now shift out the data 
-    for(int i=maxbytes;i>0;i--)
- 	shiftOut(SPI_MOSI,SPI_CLK,MSBFIRST,spidata[i-1]);
-    //latch the data onto the display
-    digitalWrite(SPI_CS,HIGH);
-}    
+void MAX7219::clearDisplay(byte topo) {
+    byte *buf;
 
+    if(_topology[topo].ID == MAX7219_MODE_OFF ||
+       _topology[topo].ID == MAX7219_MODE_NC) return;
+    
+    buf = (byte *)calloc(getDigitCount(topo), sizeof(byte));
+    setDigits(buf, topo);
+    free(buf);
+}
 
+void MAX7219::zeroDisplay(byte topo) {
+    byte *buf;
+    word digits;
+
+    if(_topology[topo].ID == MAX7219_MODE_OFF ||
+       _topology[topo].ID == MAX7219_MODE_NC) return;
+  
+    digits = getDigitCount(topo);
+    buf = (byte *)malloc(digits * sizeof(byte));
+    switch(_topology[topo].ID) {
+        case MAX7219_MODE_7SEGMENT:
+            memset((void *)buf, 0x00, digits * sizeof(byte));
+            break;
+        case MAX7219_MODE_MATRIX:
+            buf[0] = 0x01;
+            memset((void *)&buf[1], 0x00, (digits - 1) * sizeof(byte));
+            break;
+        case MAX7219_MODE_BARGRAPH:
+            memset((void *)buf, 0x01, digits * sizeof(byte));
+            break;
+    }
+    setDigits(buf, topo);    
+    free(buf);
+}
+
+void MAX7219::set7Segment(char *number, byte topo) {
+    byte *buf, chr;
+    word digits;
+
+    if(_topology[topo].ID != MAX7219_MODE_7SEGMENT) return;
+  
+    digits = getDigitCount(topo);
+    buf = (byte *)calloc(digits, sizeof(byte));
+    for(int i = 0; i < digits; i++) {
+        chr = number[i];
+        //Set DP if so instructed
+        if((byte)chr & MAX7219_FLG_SEGDP) {
+            buf[i] |= MAX7219_FLG_SEGDP;
+            (byte)chr &= ~MAX7219_FLG_SEGDP; 
+        }
+        //Cheaper than using atoi() or a lookup table
+        switch(chr) {
+            case '0':
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+            case '7':
+            case '8':
+            case '9':
+                buf[i] |= (byte)chr - (byte)'0';
+                break;
+            case '-':
+                buf[i] |= 0x0A;
+                break;
+            case 'E':
+            case 'e':
+                buf[i] |= 0x0B;
+                break;
+            case 'H':
+            case 'h':
+                buf[i] |= 0x0C;
+                break;
+            case 'L':
+            case 'l':
+                buf[i] |= 0x0D;
+                break;
+            case 'P':
+            case 'p':
+                buf[i] |= 0x0E;
+                break;
+            case ' ':
+                buf[i] |= 0x0F;
+                break;
+        } 
+    }
+    setDigits(buf, topo);    
+    free(buf);
+}
+
+void MAX7219::setBarGraph(byte *values, boolean dot, byte topo){
+    byte *buf;
+    word digits;
+
+    if(_topology[topo].ID != MAX7219_MODE_BARGRAPH) return;
+  
+    digits = getDigitCount(topo);
+    buf = (byte *)malloc(digits * sizeof(byte));
+    for(int i = 0; i < digits; i++) {
+        if(!values[i]) buf[i] = values[i];
+        else 
+            if(dot) buf[i] = 1 << (values[i] - 1);
+            else {
+                buf[i] = 0x00;
+                for(int j = 0; j < values[i] - 1; j++) buf[i] |= 1 << j;
+            }
+    }
+    setDigits(buf, topo);    
+    free(buf);  
+}
+
+void MAX7219::setMatrix(byte *values, byte topo) {
+    if(_topology[topo].ID != MAX7219_MODE_MATRIX) return;
+  
+    setDigits(values, topo);
+}
+
+void MAX7219::writeRegister(byte addr, byte value, byte chip) {
+    digitalWrite(_pinLOAD, LOW);
+    
+    //Datasheet calls for 25ns between LOAD/#CS going low and the start of the
+    //transfer, Arduino can only go as low as 3us
+    delayMicroseconds(5);
+    SPI.transfer(addr);
+    SPI.transfer(value);
+    for(int i = 0; i < chip; i++) {
+        SPI.transfer(MAX7219_REG_NOOP);
+        SPI.transfer(0x00);
+    }
+    
+    digitalWrite(_pinLOAD, HIGH);
+}
+
+void MAX7219::writeRegisters(word *registers, byte size, byte chip) {
+    digitalWrite(_pinLOAD, LOW);
+    
+    //Datasheet calls for 25ns between LOAD/#CS going low and the start of the
+    //transfer, Arduino can only go as low as 3us
+    delayMicroseconds(5);
+
+    for(int i = size; i > 0; i--) {
+        SPI.transfer(highByte(registers[i - 1]);
+        SPI.transfer(lowByte(registers[i - 1]);
+    }
+    for(int i = 0; i < chip; i++) {
+        SPI.transfer(MAX7219_REG_NOOP);
+        SPI.transfer(0x00);
+    }
+    
+    digitalWrite(_pinLOAD, HIGH);
+}
+
+void MAX7219::setDigits(byte *values, byte topo) {
+    word *buf = (word *)malloc(_topology[topo].length * sizeof(word));
+    word digits, transfers;
+    
+    digits = getDigitCount(topo);
+    transfers = digits / _topology[topo].length;
+    if(digits % _topology[topo].length) transfers++;
+    
+    for (int i = 0; i < transfers; i++) {
+        for(int j = 0; j < _topology[topo].length; j++)
+            if(i < _topology[topo].list[j].length)
+                buf[j] = word(MAX7219_REG_DIGIT0 + 
+                              _topology[topo].list[j].data[i],
+                              values[(transfers - 1) * j + i]);
+            else
+                buf[j] = word(MAX7219_REG_NOOP, 0x00);
+        writeRegisters(buf, _topology[topo].length, 
+                       _topology[topo].list[0].ID);
+    }
+    
+    free(buf); 
+}
+
+void MAX7219::getDigitCount(byte topo) {
+    word result = 0;
+    
+    for(int i = 0; i < _topology[topo].length; i++)
+        result += _topology[topo].list[i].length;
+        
+    return result;
+}
