@@ -1,39 +1,35 @@
-/*
-  LedControl.cpp - A library for controling Leds with a MAX7219/MAX7221
-  Copyright (c) 2007 Eberhard Fahle
-
-  This library is free software; you can redistribute it and/or
-  modify it under the terms of the GNU Lesser General Public
-  License as published by the Free Software Foundation; either
-  version 2.1 of the License, or (at your option) any later version.
-
-  This library is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-  Lesser General Public License for more details.
-
-  You should have received a copy of the GNU Lesser General Public
-  License along with this library; if not, write to the Free Software
-  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-*/
+/* Arduino MAX7219/7221 Library
+ * See the README file for author and licensing information. In case it's
+ * missing from your distribution, use the one here as the authoritative
+ * version: https://github.com/csdexter/MAX7219/blob/master/README
+ *
+ * This library is for use with Maxim's MAX7219 and MAX7221 LED driver chips.
+ * See the example sketches to learn how to use the library in your code.
+ *
+ * This is the main code file for the library.
+ * See the header file for better function documentation.
+ * ---------------------------------------------------------------------------
+ * The header of the original file follows:
+ *
+ * LedControl.cpp - A library for controling Leds with a MAX7219/MAX7221
+ * Copyright (c) 2007 Eberhard Fahle
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
 #include "LedControl.h"
-
-//the opcodes for the MAX7221 and MAX7219
-#define OP_NOOP   0
-#define OP_DIGIT0 1
-#define OP_DIGIT1 2
-#define OP_DIGIT2 3
-#define OP_DIGIT3 4
-#define OP_DIGIT4 5
-#define OP_DIGIT5 6
-#define OP_DIGIT6 7
-#define OP_DIGIT7 8
-#define OP_DECODEMODE  9
-#define OP_INTENSITY   10
-#define OP_SCANLIMIT   11
-#define OP_SHUTDOWN    12
-#define OP_DISPLAYTEST 15
 
 LedControl::LedControl(int dataPin, int clkPin, int csPin, int numDevices) {
     SPI_MOSI=dataPin;
