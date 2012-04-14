@@ -55,9 +55,16 @@ void MAX7219::begin(const MAX7219_Topology *topology, const byte length) {
     SPI.setClockDivider(SPI_CLOCK_DIV8);
     
     for(int i = 0; i < _chips; i++) {
+        //Since the MAX7219 does not have a RESET, we must enforce consistency
         noDisplayTest(i);
         setScanLimit(0x07, i);
         setIntensity(0x08, i);
+        writeRegister(MAX7219_REG_DECODEMODE, 
+                      MAX7219_FLG_DIGIT0_RAW | MAX7219_FLG_DIGIT1_RAW | 
+                      MAX7219_FLG_DIGIT2_RAW | MAX7219_FLG_DIGIT3_RAW | 
+                      MAX7219_FLG_DIGIT4_RAW | MAX7219_FLG_DIGIT5_RAW | 
+                      MAX7219_FLG_DIGIT6_RAW | MAX7219_FLG_DIGIT7_RAW, i)
+        noShutdown(i);
     }
     
     for(int i = 0; i < _elements; i++) {
@@ -65,6 +72,16 @@ void MAX7219::begin(const MAX7219_Topology *topology, const byte length) {
         if(_topology[i].ID == MAX7219_MODE_NC) 
             setScanLimit(0x07 - _topology[i].list[0].length, 
                          _topology[i].list[0].ID);
+        if(_topology[i].ID == MAX7219_MODE_7SEGMENT) {
+            for(int j = 0; j < _topology[i].length; j++) {
+                byte decodemask = 0;
+
+                for(int k = 0; k < _topology[i].list[j].length; k++)
+                    decodemask |= MAX7219_FLG_DIGIT0_CODEB << 
+                                  _topology[i].list[j].data[k];
+                writeRegister(MAX7219_REG_DECODEMODE, decodemask, j);
+            }
+        }
     }
 }
 
