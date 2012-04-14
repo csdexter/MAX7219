@@ -3,5 +3,5 @@
 - related to the above, implement fonts via providers (dependency injection) for matrix and 7 segment
 - add HAL support for shift registers, used when routing LOAD/#CS via one of those
 - add SPI arbitrator support
-- add support for 14 and 16 -segment mode
+- add support for 14 and 16 -segment mode, add note to README explaining that the number of bytes read when setting is digits/2 in this case
 - implement external element controllers, mainly for animations ticked off from loop(). Rotating dash, spinning zero and scanning bargraph come to mind. Blinking cursor (on matrices) also seems like a good candidate.

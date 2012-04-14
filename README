@@ -53,14 +53,9 @@ LIBRARY NOTES:
    In so doing, each topology element gets mapped to a MAX7219 digit and
    offers direct access to its component segments.
  * The topology pointer passed to begin() is only being read from and thus
-   declared and treated as const. The structure is organized like a linked
-   list of lists, with the sole difference that it uses the .length member
-   and not a NULL value to control size. The first level is the topology
-   elements, the second one is the chips and the third one is the digits. The
-   first and second levels behave identically in what the data structure is
-   concerned, the third level will be a byte[] for all types except 
-   MAX7219_MODE_NC where only the length is used from the upper level and the
-   .data/.list members are ignored.
+   declared and treated as const.
+ * The default topology consists of a single element: one 8-digit 7-segment
+   display.
  * All topology elements can span chips (i.e. you could have a 4-digit
    7-segment display made up of the last two digits of chip 2 and the first
    two digits of chip 3); with the sole exception of MAX7219_MODE_NC which

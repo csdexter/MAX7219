@@ -34,16 +34,23 @@
 #include <SPI.h>
 
 void MAX7219::begin(const MAX7219_Topology *topology, const byte length) {
-    static const MAX7219_Topology defaultTopo = MAX7219_DEFAULT_TOPOLOGY;
+    MAX7219_Topology *defaultTopo;
     
-    if(topology) _topology = topology;
-    else _topology = defaultTopo;
+    if(topology) {
+        _topology = topology;
+        _elements = length;
+    } else {
+        defaultTopo = (MAX7219_Topology *)malloc(sizeof(MAX7219_Topology) * 
+                                                 MAX7219_DEFAULT_LENGTH);
+        MAX7219_DEFAULT_TOPOLOGY(defaultTopo);
+        _topology = defaultTopo;
+        _elements = MAX7219_DEFAULT_LENGTH;
+    };
     
     _chips = 0;
-    for(int i = 0; i < length; i++) 
-        for(int j = 0; j < _topology[i].length; j++)
-            if(_topology[i].list[j].ID > _chips) 
-                _chips = _topology[i].list[j].ID;
+    for(int i = 0; i < length; i++)
+        if(_topology[i].chipTo > _chips) 
+                _chips = _topology[i].chipTo;
     _chips++;
     
     SPI.begin();
@@ -63,25 +70,26 @@ void MAX7219::begin(const MAX7219_Topology *topology, const byte length) {
                       MAX7219_FLG_DIGIT0_RAW | MAX7219_FLG_DIGIT1_RAW | 
                       MAX7219_FLG_DIGIT2_RAW | MAX7219_FLG_DIGIT3_RAW | 
                       MAX7219_FLG_DIGIT4_RAW | MAX7219_FLG_DIGIT5_RAW | 
-                      MAX7219_FLG_DIGIT6_RAW | MAX7219_FLG_DIGIT7_RAW, i)
+                      MAX7219_FLG_DIGIT6_RAW | MAX7219_FLG_DIGIT7_RAW, i);
         noShutdown(i);
     }
     
     for(int i = 0; i < _elements; i++) {
         clearDisplay(i);
-        if(_topology[i].ID == MAX7219_MODE_NC) 
-            setScanLimit(0x07 - _topology[i].list[0].length, 
-                         _topology[i].list[0].ID);
-        if(_topology[i].ID == MAX7219_MODE_7SEGMENT) {
-            for(int j = 0; j < _topology[i].length; j++) {
+        if(_topology[i].elementType == MAX7219_MODE_NC) 
+            setScanLimit(_topology[i].digitFrom - 1, _topology[i].chipFrom);
+        if(_topology[i].elementType == MAX7219_MODE_7SEGMENT)
+            for(int j = 0; j < _topology[i].chipTo - _topology[i].chipFrom +
+                1; j++) {
                 byte decodemask = 0;
 
-                for(int k = 0; k < _topology[i].list[j].length; k++)
-                    decodemask |= MAX7219_FLG_DIGIT0_CODEB << 
-                                  _topology[i].list[j].data[k];
+                for(int k = (j == _topology[i].chipFrom ?
+                             _topology[i].digitFrom : 0);
+                     k < (j == _topology[i].chipTo ? 
+                          _topology[i].digitTo : 7); k++)
+                    decodemask |= MAX7219_FLG_DIGIT0_CODEB << k;
                 writeRegister(MAX7219_REG_DECODEMODE, decodemask, j);
             }
-        }
     }
 }
 
@@ -93,8 +101,8 @@ void MAX7219::end(void) {
 void MAX7219::clearDisplay(byte topo) {
     byte *buf;
 
-    if(_topology[topo].ID == MAX7219_MODE_OFF ||
-       _topology[topo].ID == MAX7219_MODE_NC) return;
+    if(_topology[topo].elementType == MAX7219_MODE_OFF ||
+       _topology[topo].elementType == MAX7219_MODE_NC) return;
     
     buf = (byte *)calloc(getDigitCount(topo), sizeof(byte));
     setDigits(buf, topo);
@@ -105,12 +113,12 @@ void MAX7219::zeroDisplay(byte topo) {
     byte *buf;
     word digits;
 
-    if(_topology[topo].ID == MAX7219_MODE_OFF ||
-       _topology[topo].ID == MAX7219_MODE_NC) return;
+    if(_topology[topo].elementType == MAX7219_MODE_OFF ||
+       _topology[topo].elementType == MAX7219_MODE_NC) return;
   
     digits = getDigitCount(topo);
     buf = (byte *)malloc(digits * sizeof(byte));
-    switch(_topology[topo].ID) {
+    switch(_topology[topo].elementType) {
         case MAX7219_MODE_7SEGMENT:
             memset((void *)buf, 0x00, digits * sizeof(byte));
             break;
@@ -130,16 +138,16 @@ void MAX7219::set7Segment(char *number, byte topo) {
     byte *buf, chr;
     word digits;
 
-    if(_topology[topo].ID != MAX7219_MODE_7SEGMENT) return;
+    if(_topology[topo].elementType != MAX7219_MODE_7SEGMENT) return;
   
     digits = getDigitCount(topo);
     buf = (byte *)calloc(digits, sizeof(byte));
-    for(int i = 0; i < digits; i++) {
+    for(word i = 0; i < digits; i++) {
         chr = number[i];
         //Set DP if so instructed
         if((byte)chr & MAX7219_FLG_SEGDP) {
             buf[i] |= MAX7219_FLG_SEGDP;
-            (byte)chr &= ~MAX7219_FLG_SEGDP; 
+            chr &= ~MAX7219_FLG_SEGDP; 
         }
         //Cheaper than using atoi() or a lookup table
         switch(chr) {
@@ -153,7 +161,7 @@ void MAX7219::set7Segment(char *number, byte topo) {
             case '7':
             case '8':
             case '9':
-                buf[i] |= (byte)chr - (byte)'0';
+                buf[i] |= chr - (byte)'0';
                 break;
             case '-':
                 buf[i] |= 0x0A;
@@ -187,11 +195,11 @@ void MAX7219::setBarGraph(byte *values, boolean dot, byte topo){
     byte *buf;
     word digits;
 
-    if(_topology[topo].ID != MAX7219_MODE_BARGRAPH) return;
+    if(_topology[topo].elementType != MAX7219_MODE_BARGRAPH) return;
   
     digits = getDigitCount(topo);
     buf = (byte *)malloc(digits * sizeof(byte));
-    for(int i = 0; i < digits; i++) {
+    for(word i = 0; i < digits; i++) {
         if(!values[i]) buf[i] = values[i];
         else 
             if(dot) buf[i] = 1 << (values[i] - 1);
@@ -205,7 +213,7 @@ void MAX7219::setBarGraph(byte *values, boolean dot, byte topo){
 }
 
 void MAX7219::setMatrix(byte *values, byte topo) {
-    if(_topology[topo].ID != MAX7219_MODE_MATRIX) return;
+    if(_topology[topo].elementType != MAX7219_MODE_MATRIX) return;
   
     setDigits(values, topo);
 }
@@ -234,8 +242,8 @@ void MAX7219::writeRegisters(word *registers, byte size, byte chip) {
     delayMicroseconds(5);
 
     for(int i = size; i > 0; i--) {
-        SPI.transfer(highByte(registers[i - 1]);
-        SPI.transfer(lowByte(registers[i - 1]);
+        SPI.transfer(highByte(registers[i - 1]));
+        SPI.transfer(lowByte(registers[i - 1]));
     }
     for(int i = 0; i < chip; i++) {
         SPI.transfer(MAX7219_REG_NOOP);
@@ -246,33 +254,40 @@ void MAX7219::writeRegisters(word *registers, byte size, byte chip) {
 }
 
 void MAX7219::setDigits(byte *values, byte topo) {
-    word *buf = (word *)malloc(_topology[topo].length * sizeof(word));
-    word digits, transfers;
+    word *buf;
+    word transfers;
+    byte chips;
     
-    digits = getDigitCount(topo);
-    transfers = digits / _topology[topo].length;
-    if(digits % _topology[topo].length) transfers++;
+    chips = _topology[topo].chipTo - _topology[topo].chipFrom + 1;
+    buf = (word *)malloc(chips * sizeof(word));
+    transfers = (_topology[topo].chipFrom == _topology[topo].chipTo ? 
+                 _topology[topo].digitTo - _topology[topo].digitFrom :
+                 (_topology[topo].chipFrom == _topology[topo].chipTo - 1 ?
+                 max(7 - _topology[topo].digitFrom,
+                     _topology[topo].digitTo) + 1 : 8));
     
-    for (int i = 0; i < transfers; i++) {
-        for(int j = 0; j < _topology[topo].length; j++)
-            if(i < _topology[topo].list[j].length)
+    for (word i = 0; i < transfers; i++) {
+        for(byte j = 0; j < chips; j++)
+            if(i < (j == _topology[topo].chipFrom ? 
+                    7 - _topology[topo].digitFrom + 1 : 
+                    (j == _topology[topo].chipTo ? 
+                     _topology[topo].digitTo + 1 : 8)))
                 buf[j] = word(MAX7219_REG_DIGIT0 + 
-                              _topology[topo].list[j].data[i],
+                              (j == _topology[topo].chipFrom ? 
+                               _topology[topo].digitFrom + i : i),
                               values[(transfers - 1) * j + i]);
             else
                 buf[j] = word(MAX7219_REG_NOOP, 0x00);
-        writeRegisters(buf, _topology[topo].length, 
-                       _topology[topo].list[0].ID);
+        writeRegisters(buf, chips, _topology[topo].chipFrom);
     }
     
     free(buf); 
 }
 
-void MAX7219::getDigitCount(byte topo) {
-    word result = 0;
-    
-    for(int i = 0; i < _topology[topo].length; i++)
-        result += _topology[topo].list[i].length;
-        
-    return result;
+word MAX7219::getDigitCount(byte topo) {
+    return (_topology[topo].chipFrom == _topology[topo].chipTo ? 
+            _topology[topo].digitFrom - _topology[topo].digitTo + 1 :
+            (7 - _topology[topo].digitFrom + 1 + 
+             (_topology[topo].chipTo - _topology[topo].chipFrom - 1) * 8 + 
+             _topology[topo].digitTo + 1));
 }

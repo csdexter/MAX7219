@@ -94,37 +94,16 @@
 //Don't scan this digit
 #define MAX7219_MODE_NC 0x05
 
-typedef struct _MAX7219_Topology {
-    byte ID;
-    byte length;
-    union {
-        struct _MAX7219_Topology *list;
-        byte *data;
-    }
+typedef struct {
+    byte elementType;
+    byte chipFrom, digitFrom;
+    byte chipTo, digitTo;
 } MAX7219_Topology;
 
-#define MAX7219_7SEGMENT_TOPOLOGY {.ID = MAX7219_MODE_7SEGMENT, \
-                                   .length = 1, \
-                                   .list = {.ID = 0, \
-                                            .length = 8, \
-                                            .data = {0, 1, 2, 3, 4, 5, 6, 7} \
-                                            } \
-                                   }
-#define MAX7219_MATRIX_TOPOLOGY {.ID = MAX7219_MODE_MATRIX, \
-                                 .length = 1, \
-                                 .list = {.ID = 0, \
-                                          .length = 8, \
-                                          .data = {0, 1, 2, 3, 4, 5, 6, 7} \
-                                          } \
-                                 }
-#define MAX7219_BARGRAPH_TOPOLOGY {.ID = MAX7219_MODE_BARGRAPH, \
-                                   .length = 1, \
-                                   .list = {.ID = 0, \
-                                            .length = 8, \
-                                            .data = {0, 1, 2, 3, 4, 5, 6, 7} \
-                                            } \
-                                   }
-#define MAX7219_DEFAULT_TOPOLOGY MAX7219_7SEGMENT_TOPOLOGY
+#define MAX7219_DEFAULT_TOPOLOGY(x) x->elementType = MAX7219_MODE_7SEGMENT, \
+                                    x->chipFrom = 0, x->digitFrom = 0, \
+                                    x->chipTo = 0, x->digitTo = 7
+#define MAX7219_DEFAULT_LENGTH 1
 
 class MAX7219 
 {
@@ -138,19 +117,19 @@ class MAX7219
         *   pinLOAD - digital pin to which LOAD/#CS is wired to, defaults to
         *             SPI SS
         */
-        MAX7219(byte pinLOAD = MAX7219_PIN_LOAD) { _pinLOAD = pinLOAD };
+        MAX7219(byte pinLOAD = MAX7219_PIN_LOAD) { _pinLOAD = pinLOAD; };
 
         /*
         * Description:
         *   This is the destructor, it simply calls end().
         */
-        ~MAX7219() { end() };
+        ~MAX7219() { end(); };
         
         /* 
         * Description:
         *   Sets the topology of the display.
         * Parameters:
-        *   topology - topology to use, default topology assumed if ignored
+        *   topology - topology to use, ignore for defaults
         *   length   - number of topology elements described
         */
         void begin(const MAX7219_Topology *topology = NULL, 
@@ -167,7 +146,7 @@ class MAX7219
         *   Gets the total number of devices attached to this driver, as
         *   extrapolated from the current topology.
         */
-        byte getChipCount(void) { return _chips };
+        byte getChipCount(void) { return _chips; };
         
         /* 
         * Description:
@@ -270,7 +249,7 @@ class MAX7219
         void setMatrix(byte *values, byte topo = 0);
 
     private:
-        MAX7219_Topology *_topology;
+        const MAX7219_Topology *_topology;
         byte _pinLOAD, _elements, _chips;
         
         /*
