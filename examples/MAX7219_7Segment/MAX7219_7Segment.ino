@@ -1,5 +1,5 @@
 /*
-* MAX7219 Example Sketch
+* MAX7219 7-segment Example Sketch
 * Written by Eberhard Fahle
 * Updated for the current state of the library by Radu - Eosif Mihailescu
 *
