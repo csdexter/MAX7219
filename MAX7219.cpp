@@ -134,7 +134,7 @@ void MAX7219::zeroDisplay(byte topo) {
     free(buf);
 }
 
-void MAX7219::set7Segment(char *number, byte topo) {
+void MAX7219::set7Segment(const char *number, byte topo) {
     byte *buf, chr;
     word digits;
 
@@ -191,7 +191,7 @@ void MAX7219::set7Segment(char *number, byte topo) {
     free(buf);
 }
 
-void MAX7219::setBarGraph(byte *values, boolean dot, byte topo){
+void MAX7219::setBarGraph(const byte *values, boolean dot, byte topo){
     byte *buf;
     word digits;
 
@@ -212,7 +212,7 @@ void MAX7219::setBarGraph(byte *values, boolean dot, byte topo){
     free(buf);  
 }
 
-void MAX7219::setMatrix(byte *values, byte topo) {
+void MAX7219::setMatrix(const byte *values, byte topo) {
     if(_topology[topo].elementType != MAX7219_MODE_MATRIX) return;
   
     setDigits(values, topo);
@@ -234,7 +234,7 @@ void MAX7219::writeRegister(byte addr, byte value, byte chip) {
     digitalWrite(_pinLOAD, HIGH);
 }
 
-void MAX7219::writeRegisters(word *registers, byte size, byte chip) {
+void MAX7219::writeRegisters(const word *registers, byte size, byte chip) {
     digitalWrite(_pinLOAD, LOW);
     
     //Datasheet calls for 25ns between LOAD/#CS going low and the start of the
@@ -253,7 +253,7 @@ void MAX7219::writeRegisters(word *registers, byte size, byte chip) {
     digitalWrite(_pinLOAD, HIGH);
 }
 
-void MAX7219::setDigits(byte *values, byte topo) {
+void MAX7219::setDigits(const byte *values, byte topo) {
     word *buf;
     word transfers;
     byte chips;

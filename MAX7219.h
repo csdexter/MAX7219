@@ -225,7 +225,7 @@ class MAX7219
         *            corresponding digit should have DP on.
         *   topo   - topology element to update (must be 7-segment)
         */
-        void set7Segment(char *number, byte topo = 0);
+        void set7Segment(const char *number, byte topo = 0);
         
         /* 
         * Description:
@@ -236,7 +236,8 @@ class MAX7219
         *   dot    - use dot instead of bar mode
         *   topo   - topology element to update (must be bargraph)
         */
-        void setBarGraph(byte *values, boolean dot = false, byte topo = 0);
+        void setBarGraph(const byte *values, boolean dot = false, 
+                         byte topo = 0);
         
         /*
         * Description:
@@ -246,7 +247,7 @@ class MAX7219
         *   values - [0, 0xFF]
         *   topo   - topology element to update (must be matrix)
         */
-        void setMatrix(byte *values, byte topo = 0);
+        void setMatrix(const byte *values, byte topo = 0);
 
     private:
         const MAX7219_Topology *_topology;
@@ -266,14 +267,14 @@ class MAX7219
         *   size      - length of data to be written
         *   chip      - chip index to start writing at
         */
-        void writeRegisters(word *registers, byte size, byte chip = 0);
+        void writeRegisters(const word *registers, byte size, byte chip = 0);
         
         /*
         * Descriptions:
         *   Sets consecutive digits in a topology element to the given raw
         *   values.
         */
-        void setDigits(byte *values, byte topo = 0);
+        void setDigits(const byte *values, byte topo = 0);
         
         /*
         * Description:

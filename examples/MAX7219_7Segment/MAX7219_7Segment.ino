@@ -1,73 +1,72 @@
-//We always have to include the library
-#include <LedControl.h>
-
 /*
- Now we need a LedControl to work with.
- ***** These pin numbers will probably not work with your hardware *****
- pin 12 is connected to the DataIn 
- pin 11 is connected to the CLK 
- pin 10 is connected to LOAD 
- We have only a single MAX72XX.
- */
-LedControl lc=LedControl(12,11,10,1);
+* MAX7219 Example Sketch
+* Written by Eberhard Fahle
+* Updated for the current state of the library by Radu - Eosif Mihailescu
+*
+* This example sketch illustrates how to use some of the basic commands in the
+* MAX7219 Library. The sketch will use the MAX7219/7221 to display some
+* numbers and characters on a 7-segment display.
+* More information on the MAX7219/7221 chips can be found in the datasheet.
+*
+* HARDWARE SETUP:
+* This sketch assumes you have connected your MAX7219/7221 to the SPI
+* interface of the Arduino as explained in the README file. A 4-digit
+* 7-segment common cathode display should be connected to the first 4 digits
+* of the MAX7219/7221. Finally, a current limiting resistor should be 
+* connected between ISET and V+, whose value can be determined from MAX7219's
+* and the display's datasheets.
+*
+* USING THE SKETCH:
+* Compile, upload, enjoy :-)
+*
+*/
 
+#include <stdio.h> /* for itoa(); */
+
+//Due to a bug in Arduino, this needs to be included here too/first
+#include <SPI.h>
+
+#include <MAX7219.h>
+
+const MAX7219_Topology topology[2] = {{MAX7219_MODE_7SEGMENT, 0, 0, 0, 3},
+                                      {MAX7219_MODE_NC, 0, 4, 0, 7}};
+const char alphabet[17] = "0123456789-EHLP ";
 /* we always wait a bit between updates of the display */
-unsigned long delaytime=250;
+const byte delaytime = 250;
+
+MAX7219 maxled;
 
 void setup() {
-  /*
-   The MAX72XX is in power-saving mode on startup,
-   we have to do a wakeup call
-   */
-  lc.shutdown(0,false);
-  /* Set the brightness to a medium values */
-  lc.setIntensity(0,8);
-  /* and clear the display */
-  lc.clearDisplay(0);
+  maxled.begin(topology, 2);
+  maxled.zeroDisplay();
 }
 
-
-/*
- This method will display the characters for the
- word "Arduino" one after the other on digit 0. 
- */
-void writeArduinoOn7Segment() {
-  lc.setChar(0,0,'a',false);
-  delay(delaytime);
-  lc.setRow(0,0,0x05);
-  delay(delaytime);
-  lc.setChar(0,0,'d',false);
-  delay(delaytime);
-  lc.setRow(0,0,0x1c);
-  delay(delaytime);
-  lc.setRow(0,0,B00010000);
-  delay(delaytime);
-  lc.setRow(0,0,0x15);
-  delay(delaytime);
-  lc.setRow(0,0,0x1D);
-  delay(delaytime);
-  lc.clearDisplay(0);
-  delay(delaytime);
-} 
-
-/*
-  This method will scroll all the hexa-decimal
- numbers and letters on the display. You will need at least
- four 7-Segment digits. otherwise it won't really look that good.
- */
+/* This will scroll the whole 7-segment font on the display. */
 void scrollDigits() {
-  for(int i=0;i<13;i++) {
-    lc.setDigit(0,3,i,false);
-    lc.setDigit(0,2,i+1,false);
-    lc.setDigit(0,1,i+2,false);
-    lc.setDigit(0,0,i+3,false);
+  for(byte i = 0; i < 12; i++) {
+    maxled.set7Segment(&alphabet[i]);
     delay(delaytime);
   }
-  lc.clearDisplay(0);
+  maxled.clearDisplay();
   delay(delaytime);
+}
+
+/* This will count down from 100 to zero */
+void countDown() {
+  char buf[5] = "";
+  
+  for(byte i = 100; i > 0; i--) {
+    itoa(i, buf, 10);
+    maxled.set7Segment(buf);
+    delay(delaytime);
+  }
+  maxled.clearDisplay();
+  delay(delaytime);
+  maxled.set7Segment("----");
+  delay(delaytime);  
 }
 
 void loop() { 
-  writeArduinoOn7Segment();
   scrollDigits();
+  countDown();
 }
