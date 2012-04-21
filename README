@@ -33,8 +33,11 @@ HARDWARE NOTES:
                       zeroDisplay()) is the bottom one (wired to SEGG)
      for matrix    -> pixel (0, 0) (the one that lights up when you write a
                       value of {0x01, 0x00, ...} or when you call
-                      zeroDisplay()) is the bottom left one (wired to DIG0,
-                      SEGG)
+                      zeroDisplay()) is the top right one (wired to DIG0,
+                      SEGG). Directly under it we have (0, 1) (accessed by
+                      writing {0x00, 0x01, 0x00, ...}), wired to DIG1, SEGG;
+                      directly to its left we have (1, 0) (accessed by writing
+                      {0x02, 0x00, ...}), wired to DIG0, SEGF.
    For chaining MAX7219/7221s:
      DOUT(n)     -> DIN(n+1)  (MAX7219 output to MAX7219 input)
      DIN(1)      -> MOSI      (Arduino output)
