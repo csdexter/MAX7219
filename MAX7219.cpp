@@ -244,9 +244,9 @@ void MAX7219::writeRegister(byte addr, byte value, byte chip) {
     
     digitalWrite(_pinLOAD, HIGH);
 #if defined(MAX7219_DEBUG)
-    Serial.print("Wrote register ");
+    Serial.print("Wrote register 0x");
     Serial.print(addr, HEX);
-    Serial.print(" with value ");
+    Serial.print(" with value 0x");
     Serial.print(value, HEX);
     Serial.print(" [");
     Serial.print(value, BIN);
@@ -275,9 +275,9 @@ void MAX7219::writeRegisters(const word *registers, byte size, byte chip) {
 #if defined(MAX7219_DEBUG)
     Serial.print("Wrote (register, value) pairs {");
     for(word i = 0; i < size; i++) {
-        Serial.print("(");
+        Serial.print("(0x");
         Serial.print(highByte(registers[i]), HEX);
-        Serial.print(", ");
+        Serial.print(", 0x");
         Serial.print(lowByte(registers[i]), HEX);
         Serial.print(" [");
         Serial.print(lowByte(registers[i]), BIN);
