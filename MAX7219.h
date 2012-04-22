@@ -155,10 +155,10 @@ class MAX7219
         * 	chip - the index of the chip to control
         */
         void shutdown(byte chip = 0) {
-            writeRegister(MAX7219_REG_SHUTDOWN, MAX7219_FLG_SHUTDOWN, chip);
+            writeRegister(MAX7219_REG_SHUTDOWN, 0x00, chip);
         };
         void noShutdown(byte chip = 0) {
-            writeRegister(MAX7219_REG_SHUTDOWN, 0x00, chip);
+            writeRegister(MAX7219_REG_SHUTDOWN, MAX7219_FLG_SHUTDOWN, chip);
         };
 
         /* 
@@ -268,14 +268,12 @@ class MAX7219
         *   chip      - chip index to start writing at
         */
         void writeRegisters(const word *registers, byte size, byte chip = 0);
-        
         /*
         * Descriptions:
         *   Sets consecutive digits in a topology element to the given raw
         *   values.
         */
         void setDigits(const byte *values, byte topo = 0);
-        
         /*
         * Description:
         *   Counts the number of digits spanned by a topology element.

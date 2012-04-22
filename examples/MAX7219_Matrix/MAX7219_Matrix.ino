@@ -162,7 +162,7 @@ void animateArduino() {
 }
 
 void rows() {
-  for(byte i = 0; i < 7; i++) {
+  for(byte i = 0; i < 8; i++) {
     framebuffer[i] = 0xFF;
     for(byte j = 0; j < 4; j++) {
       maxled.setMatrix(framebuffer);
@@ -175,7 +175,7 @@ void rows() {
 }
 
 void columns(){
-  for(byte i = 0; i < 7; i++) {
+  for(byte i = 0; i < 8; i++) {
     memset(framebuffer, 1 << i, 8);
     for(byte j = 0; j < 4; j++) {
       maxled.setMatrix(framebuffer);
@@ -188,7 +188,7 @@ void columns(){
 
 void single(){
   memset(framebuffer, 0x00, 8);
-  for(byte i = 0; i < 7; i++) {
+  for(byte i = 0; i < 8; i++) {
     framebuffer[0] = 1 << i;
     framebuffer[i] = 0x01 | 1 << i;
     maxled.setMatrix(framebuffer);

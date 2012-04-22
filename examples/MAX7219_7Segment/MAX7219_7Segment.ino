@@ -53,10 +53,12 @@ void scrollDigits() {
 
 /* This will count down from 100 to zero */
 void countDown() {
-  char buf[5] = "";
-  
-  for(byte i = 100; i > 0; i--) {
+  char buf[5] = "    ";
+
+  for(byte i = 99; i > 0; i--) {
     itoa(i, buf, 10);
+    //Show a space (blank digit) instead of a zero
+    buf[strlen(buf)] = " ";
     maxled.set7Segment(buf);
     delay(delaytime);
   }

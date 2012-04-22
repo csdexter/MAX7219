@@ -8,6 +8,8 @@
  *
  * This is the main code file for the library.
  * See the header file for better function documentation.
+ *
+ * #define MAX7219_DEBUG for debugging output via serial.
  * ---------------------------------------------------------------------------
  * The header of the original file follows:
  *
@@ -40,6 +42,9 @@ void MAX7219::begin(const MAX7219_Topology *topology, const byte length) {
         _topology = topology;
         _elements = length;
     } else {
+        //Yes, we are leaking memory here. Yet again, in embedded software
+        //things usually get allocated at start and never die off as there's
+        //no exit();
         defaultTopo = (MAX7219_Topology *)malloc(sizeof(MAX7219_Topology) * 
                                                  MAX7219_DEFAULT_LENGTH);
         MAX7219_DEFAULT_TOPOLOGY(defaultTopo);
@@ -52,7 +57,13 @@ void MAX7219::begin(const MAX7219_Topology *topology, const byte length) {
         if(_topology[i].chipTo > _chips) 
                 _chips = _topology[i].chipTo;
     _chips++;
-    
+#if defined(MAX7219_DEBUG)
+    Serial.print("Topology has ");
+    Serial.print(_elements);
+    Serial.print(" elements which span ");
+    Serial.print(_chips);
+    Serial.println(" chips in total.");
+#endif
     SPI.begin();
     SPI.setBitOrder(MSBFIRST);
     SPI.setDataMode(SPI_MODE0);
@@ -103,7 +114,7 @@ void MAX7219::clearDisplay(byte topo) {
 
     if(_topology[topo].elementType == MAX7219_MODE_OFF ||
        _topology[topo].elementType == MAX7219_MODE_NC) return;
-    
+
     buf = (byte *)calloc(getDigitCount(topo), sizeof(byte));
     setDigits(buf, topo);
     free(buf);
@@ -199,13 +210,13 @@ void MAX7219::setBarGraph(const byte *values, boolean dot, byte topo){
   
     digits = getDigitCount(topo);
     buf = (byte *)malloc(digits * sizeof(byte));
-    for(word i = 0; i < digits; i++) {
+    for(byte i = 0; i < digits; i++) {
         if(!values[i]) buf[i] = values[i];
         else 
             if(dot) buf[i] = 1 << (values[i] - 1);
             else {
                 buf[i] = 0x00;
-                for(int j = 0; j < values[i] - 1; j++) buf[i] |= 1 << j;
+                for(int j = 0; j < values[i]; j++) buf[i] |= 1 << j;
             }
     }
     setDigits(buf, topo);    
@@ -232,6 +243,16 @@ void MAX7219::writeRegister(byte addr, byte value, byte chip) {
     }
     
     digitalWrite(_pinLOAD, HIGH);
+#if defined(MAX7219_DEBUG)
+    Serial.print("Wrote register ");
+    Serial.print(addr, HEX);
+    Serial.print(" with value ");
+    Serial.print(value, HEX);
+    Serial.print(" [");
+    Serial.print(value, BIN);
+    Serial.print("] on chip ");
+    Serial.println(chip);
+#endif
 }
 
 void MAX7219::writeRegisters(const word *registers, byte size, byte chip) {
@@ -241,16 +262,31 @@ void MAX7219::writeRegisters(const word *registers, byte size, byte chip) {
     //transfer, Arduino can only go as low as 3us
     delayMicroseconds(5);
 
-    for(int i = size; i > 0; i--) {
+    for(word i = size; i > 0; i--) {
         SPI.transfer(highByte(registers[i - 1]));
         SPI.transfer(lowByte(registers[i - 1]));
     }
-    for(int i = 0; i < chip; i++) {
+    for(word i = 0; i < chip; i++) {
         SPI.transfer(MAX7219_REG_NOOP);
         SPI.transfer(0x00);
     }
     
     digitalWrite(_pinLOAD, HIGH);
+#if defined(MAX7219_DEBUG)
+    Serial.print("Wrote (register, value) pairs {");
+    for(word i = 0; i < size; i++) {
+        Serial.print("(");
+        Serial.print(highByte(registers[i]), HEX);
+        Serial.print(", ");
+        Serial.print(lowByte(registers[i]), HEX);
+        Serial.print(" [");
+        Serial.print(lowByte(registers[i]), BIN);
+        Serial.print("])");
+        if(i < size - 1) Serial.print(", ");      
+    }
+    Serial.print("} starting at chip ");
+    Serial.println(chip);
+#endif
 }
 
 void MAX7219::setDigits(const byte *values, byte topo) {
@@ -261,7 +297,7 @@ void MAX7219::setDigits(const byte *values, byte topo) {
     chips = _topology[topo].chipTo - _topology[topo].chipFrom + 1;
     buf = (word *)malloc(chips * sizeof(word));
     transfers = (_topology[topo].chipFrom == _topology[topo].chipTo ? 
-                 _topology[topo].digitTo - _topology[topo].digitFrom :
+                 getDigitCount(topo) :
                  (_topology[topo].chipFrom == _topology[topo].chipTo - 1 ?
                  max(7 - _topology[topo].digitFrom,
                      _topology[topo].digitTo) + 1 : 8));
@@ -286,7 +322,7 @@ void MAX7219::setDigits(const byte *values, byte topo) {
 
 word MAX7219::getDigitCount(byte topo) {
     return (_topology[topo].chipFrom == _topology[topo].chipTo ? 
-            _topology[topo].digitFrom - _topology[topo].digitTo + 1 :
+            _topology[topo].digitTo - _topology[topo].digitFrom + 1 :
             (7 - _topology[topo].digitFrom + 1 + 
              (_topology[topo].chipTo - _topology[topo].chipFrom - 1) * 8 + 
              _topology[topo].digitTo + 1));
