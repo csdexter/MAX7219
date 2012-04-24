@@ -18,8 +18,17 @@ HARDWARE NOTES:
    on the Uno/Mega can take 1 MAX + a 64 LED matrix, but not more). This also
    means a lot of noise will be induced in the digital domain of your project
    if you don't take appropriate measures by installing the two filtering
-   capacitors shown in the datasheet. This also means level shifters will
-   be needed if you want to talk to the MAX from a 3.3V I/O Arduino.
+   capacitors shown in the datasheet. 
+ * This also means level shifters will be needed if you want to talk to the
+   MAX from a 3.3V I/O Arduino. As the MAX7219/7221 is a SPI device which you
+   may want to drive fast, you may find the majority of level shifters on the
+   market inappropriate because they are designed for I2C which doesn't go
+   faster than 100kHz in most cases. A quick and dirty solution is to use a
+   7404 (not 74LS04) hex-inverter instead (by tying two gates in series such
+   that the output is not inverted anymore). The datasheet specifies its 
+   Vhigh voltage as 2V which is more than enough when using 3.3V logic and its
+   maximum speed is above 25MHz so it's well suited for solving the problem at
+   hand.
  * Quick connection reference:
    MAX7219/7221 -> Arduino:
      DIN       -> MOSI    (Arduino output)
