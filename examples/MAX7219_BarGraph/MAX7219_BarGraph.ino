@@ -23,12 +23,12 @@
 * 
 *  SEGDP ----|>|---\  SEGDP ----|>|---\  SEGDP ----|>|---\  SEGDP ----|>|---\ 
 *  SEGA  ----|>|---|  SEGA  ----|>|---|  SEGA  ----|>|---|  SEGA  ----|>|---|
-*  SEGB  ----|>|---|  SEGB  ----|>|---|  SEGA  ----|>|---|  SEGA  ----|>|---| 
-*  SEGC  ----|>|---|  SEGC  ----|>|---|  SEGA  ----|>|---|  SEGA  ----|>|---|
-*  SEGD  ----|>|---|  SEGD  ----|>|---|  SEGA  ----|>|---|  SEGA  ----|>|---| 
-*  SEGE  ----|>|---|  SEGE  ----|>|---|  SEGA  ----|>|---|  SEGA  ----|>|---| 
-*  SEGF  ----|>|---|  SEGF  ----|>|---|  SEGA  ----|>|---|  SEGA  ----|>|---| 
-*  SEGG  ----|>|---|  SEGG  ----|>|---|  SEGA  ----|>|---|  SEGA  ----|>|---| 
+*  SEGB  ----|>|---|  SEGB  ----|>|---|  SEGB  ----|>|---|  SEGB  ----|>|---| 
+*  SEGC  ----|>|---|  SEGC  ----|>|---|  SEGC  ----|>|---|  SEGC  ----|>|---|
+*  SEGD  ----|>|---|  SEGD  ----|>|---|  SEGD  ----|>|---|  SEGD  ----|>|---| 
+*  SEGE  ----|>|---|  SEGE  ----|>|---|  SEGE  ----|>|---|  SEGE  ----|>|---| 
+*  SEGF  ----|>|---|  SEGF  ----|>|---|  SEGF  ----|>|---|  SEGF  ----|>|---| 
+*  SEGG  ----|>|---|  SEGG  ----|>|---|  SEGG  ----|>|---|  SEGG  ----|>|---| 
 *                  |                  |                  |                  |
 *               DIG0               DIG1               DIG2               DIG3
 *
@@ -58,7 +58,7 @@ void setup() {
 void scrollWave(bool mode){
   byte framebuffer[4], peak, oldpeak = 0;
   signed char slope;
-  
+
   for(byte i = 0; i < 16; i++) {
     peak = oldpeak;
     for(byte j = 0; j < 4; j++) {
