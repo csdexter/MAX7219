@@ -3,5 +3,5 @@
 - related to the above, implement fonts via providers (dependency injection) for matrix and 7 segment
 - add HAL support (shift register routing for LOAD/#CS) to the code
 - add SPI arbitrator support
-- add support for 14 and 16 -segment mode, add note to README explaining that the number of bytes read when setting is digits/2 in this case
+- add support for 14 and 16 -segment mode, add note to README explaining that the number of bytes read when setting is digits/2 in this case. This further depends on the font provider thing since (1) the MAX doesn't do 14/16 segment decoding, (2) we'll have to do it ourselves and (3) it's no fun building something for just one use.
 - implement external element controllers, mainly for animations ticked off from loop(). Rotating dash, spinning zero and scanning bargraph come to mind. Blinking cursor (on matrices) also seems like a good candidate.
