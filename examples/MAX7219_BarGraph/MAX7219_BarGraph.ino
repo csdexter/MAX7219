@@ -57,17 +57,31 @@ void setup() {
 /* This will scroll a wave across the display, in both bar/dot mode */
 void scrollWave(bool mode){
   byte framebuffer[4], peak, oldpeak = 0;
-  signed char slope;
+  signed char slope, oldslope = 1;
 
-  for(byte i = 0; i < 16; i++) {
+  for(byte i = 0; i < 13; i++) {
     peak = oldpeak;
+    slope = oldslope;
     for(byte j = 0; j < 4; j++) {
+      framebuffer[j] = peak;
+      if(j == 1) {
+        oldpeak = peak;
+        oldslope = slope;
+      };
       if(peak == 8) slope = -1;
       if(peak == 0) slope = 1;
-      framebuffer[j] = peak;
-      if(j == 1) oldpeak = peak;
       peak += slope;
     }
+    maxled.setBarGraph(framebuffer, mode);
+    delay(delaytime);
+  }
+  for(byte i = 0; i < 4; i++) {
+    //j must first become negative for the exit-condition to become true and the
+    //for loop to be exited, thus we need it to be a signed type.
+    //This is a wonderful example of how the lack of bounds checking in the 
+    //embedded world can ruin your day if you're not paying attention.
+    for(signed char j = 3; j >= 3 - i; j--) framebuffer[j] = 0;
+    for(byte j = 0; j < 3 - i; j++) framebuffer[j] = 3 - j - i;
     maxled.setBarGraph(framebuffer, mode);
     delay(delaytime);
   }
@@ -75,6 +89,5 @@ void scrollWave(bool mode){
 
 void loop() {
   scrollWave(true);
-  delay(delaytime);
   scrollWave(false);
 }
