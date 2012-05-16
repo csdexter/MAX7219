@@ -24,11 +24,10 @@ HARDWARE NOTES:
    may want to drive fast, you may find the majority of level shifters on the
    market inappropriate because they are designed for I2C which doesn't go
    faster than 100kHz in most cases. A quick and dirty solution is to use a
-   7404 (not 74LS04) hex-inverter instead (by tying two gates in series such
-   that the output is not inverted anymore). The datasheet specifies its 
-   Vhigh voltage as 2V which is more than enough when using 3.3V logic and its
-   maximum speed is above 25MHz so it's well suited for solving the problem at
-   hand.
+   74HCT125 quad-buffer instead (which adds quick-disconnect as a bonus). The
+   datasheet specifies its minimum Vhigh voltage as 2V which is more than
+   enough when using 3.3V logic and its maximum speed is above 25MHz so it's
+   well suited for solving the problem at hand.
  * Quick connection reference:
    MAX7219/7221 -> Arduino:
      DIN       -> MOSI    (Arduino output)
