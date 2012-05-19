@@ -94,6 +94,9 @@
 //Don't scan this digit
 #define MAX7219_MODE_NC 0x05
 
+//Define broadcast flag
+#define MAX7219_CHIP_ALL 0xFF
+
 typedef struct {
     byte elementType;
     byte chipFrom, digitFrom;
@@ -279,6 +282,11 @@ class MAX7219
         *   Counts the number of digits spanned by a topology element.
         */
         word getDigitCount(byte topo = 0);
+        /*
+        * Description:
+        *   Inserts a NOOP in the data stream.
+        */
+        void injectNoop(void);
 };
 
 #endif

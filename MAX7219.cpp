@@ -72,21 +72,19 @@ void MAX7219::begin(const MAX7219_Topology *topology, const byte length) {
     //yourself needing more, you shouldn't be using Arduino anyway
     SPI.setClockDivider(SPI_CLOCK_DIV8);
     
-    for(int i = 0; i < _chips; i++) {
-        //Since the MAX7219 does not have a RESET, we must enforce consistency
-        noDisplayTest(i);
-        setScanLimit(0x07, i);
-        setIntensity(0x08, i);
-        writeRegister(MAX7219_REG_DECODEMODE, 
-                      MAX7219_FLG_DIGIT0_RAW | MAX7219_FLG_DIGIT1_RAW | 
-                      MAX7219_FLG_DIGIT2_RAW | MAX7219_FLG_DIGIT3_RAW | 
-                      MAX7219_FLG_DIGIT4_RAW | MAX7219_FLG_DIGIT5_RAW | 
-                      MAX7219_FLG_DIGIT6_RAW | MAX7219_FLG_DIGIT7_RAW, i);
-        noShutdown(i);
-    }
+    //Since the MAX7219 does not have a RESET, we must enforce consistency
+    noDisplayTest(MAX7219_CHIP_ALL);
+    setScanLimit(0x07, MAX7219_CHIP_ALL);
+    setIntensity(0x08, MAX7219_CHIP_ALL);
+    writeRegister(MAX7219_REG_DECODEMODE, 
+                  MAX7219_FLG_DIGIT0_RAW | MAX7219_FLG_DIGIT1_RAW | 
+                  MAX7219_FLG_DIGIT2_RAW | MAX7219_FLG_DIGIT3_RAW | 
+                  MAX7219_FLG_DIGIT4_RAW | MAX7219_FLG_DIGIT5_RAW | 
+                  MAX7219_FLG_DIGIT6_RAW | MAX7219_FLG_DIGIT7_RAW,
+                  MAX7219_CHIP_ALL);
+    noShutdown(MAX7219_CHIP_ALL);
     
     for(int i = 0; i < _elements; i++) {
-        clearDisplay(i);
         if(_topology[i].elementType == MAX7219_MODE_NC) 
             setScanLimit(_topology[i].digitFrom - 1, _topology[i].chipFrom);
         if(_topology[i].elementType == MAX7219_MODE_7SEGMENT)
@@ -96,11 +94,12 @@ void MAX7219::begin(const MAX7219_Topology *topology, const byte length) {
 
                 for(int k = (j == _topology[i].chipFrom ?
                              _topology[i].digitFrom : 0);
-                     k < (j == _topology[i].chipTo ? 
+                     k <= (j == _topology[i].chipTo ? 
                           _topology[i].digitTo : 7); k++)
                     decodemask |= MAX7219_FLG_DIGIT0_CODEB << k;
                 writeRegister(MAX7219_REG_DECODEMODE, decodemask, j);
             }
+        clearDisplay(i);
     }
 }
 
@@ -110,12 +109,15 @@ void MAX7219::end(void) {
 }
 
 void MAX7219::clearDisplay(byte topo) {
-    byte *buf;
+    byte *buf, digits;
 
     if(_topology[topo].elementType == MAX7219_MODE_OFF ||
        _topology[topo].elementType == MAX7219_MODE_NC) return;
 
-    buf = (byte *)calloc(getDigitCount(topo), sizeof(byte));
+    digits = getDigitCount(topo);
+    buf = (byte *)calloc(digits, sizeof(byte));
+    if(_topology[topo].elementType == MAX7219_MODE_7SEGMENT)
+      memset((void *)buf, 0x0F, digits * sizeof(byte)); 
     setDigits(buf, topo);
     free(buf);
 }
@@ -230,29 +232,17 @@ void MAX7219::setMatrix(const byte *values, byte topo) {
 }
 
 void MAX7219::writeRegister(byte addr, byte value, byte chip) {
-    digitalWrite(_pinLOAD, LOW);
+    word cmd, *buf;
     
-    //Datasheet calls for 25ns between LOAD/#CS going low and the start of the
-    //transfer, Arduino can only go as low as 3us
-    delayMicroseconds(5);
-    SPI.transfer(addr);
-    SPI.transfer(value);
-    for(int i = 0; i < chip; i++) {
-        SPI.transfer(MAX7219_REG_NOOP);
-        SPI.transfer(0x00);
-    }
-    
-    digitalWrite(_pinLOAD, HIGH);
-#if defined(MAX7219_DEBUG)
-    Serial.print("Wrote register 0x");
-    Serial.print(addr, HEX);
-    Serial.print(" with value 0x");
-    Serial.print(value, HEX);
-    Serial.print(" [");
-    Serial.print(value, BIN);
-    Serial.print("] on chip ");
-    Serial.println(chip);
-#endif
+    cmd = word(addr, value);
+    if(chip == MAX7219_CHIP_ALL) {
+      buf = (word *)malloc(_chips * sizeof(word));
+      
+      for(byte i = 0; i < _chips; i++) buf[i] = cmd;
+      writeRegisters(buf, _chips, 0);
+      
+      free(buf);
+    } else writeRegisters(&cmd, 1, chip);
 }
 
 void MAX7219::writeRegisters(const word *registers, byte size, byte chip) {
@@ -262,14 +252,13 @@ void MAX7219::writeRegisters(const word *registers, byte size, byte chip) {
     //transfer, Arduino can only go as low as 3us
     delayMicroseconds(5);
 
-    for(word i = size; i > 0; i--) {
+    for(byte i = 0; i < _chips - (chip + size); i++) injectNoop();
+    
+    for(byte i = size; i > 0; i--) {
         SPI.transfer(highByte(registers[i - 1]));
         SPI.transfer(lowByte(registers[i - 1]));
     }
-    for(word i = 0; i < chip; i++) {
-        SPI.transfer(MAX7219_REG_NOOP);
-        SPI.transfer(0x00);
-    }
+    for(byte i = 0; i < chip; i++) injectNoop();
     
     digitalWrite(_pinLOAD, HIGH);
 #if defined(MAX7219_DEBUG)
@@ -301,6 +290,14 @@ void MAX7219::setDigits(const byte *values, byte topo) {
                  (_topology[topo].chipFrom == _topology[topo].chipTo - 1 ?
                  max(7 - _topology[topo].digitFrom,
                      _topology[topo].digitTo) + 1 : 8));
+#if defined(MAX7219_DEBUG)
+    Serial.print("Chips: ");
+    Serial.print(chips);
+    Serial.print(", transfers: ");
+    Serial.print(transfers);
+    Serial.print(", element: ");
+    Serial.println(topo);
+#endif
     
     for (word i = 0; i < transfers; i++) {
         for(byte j = 0; j < chips; j++)
@@ -309,8 +306,7 @@ void MAX7219::setDigits(const byte *values, byte topo) {
                     (j == _topology[topo].chipTo ? 
                      _topology[topo].digitTo + 1 : 8)))
                 buf[j] = word(MAX7219_REG_DIGIT0 + 
-                              (j == _topology[topo].chipFrom ? 
-                               _topology[topo].digitFrom + i : i),
+                              (j ? i : _topology[topo].digitFrom + i),
                               values[(transfers - 1) * j + i]);
             else
                 buf[j] = word(MAX7219_REG_NOOP, 0x00);
@@ -327,3 +323,8 @@ word MAX7219::getDigitCount(byte topo) {
              (_topology[topo].chipTo - _topology[topo].chipFrom - 1) * 8 + 
              _topology[topo].digitTo + 1));
 }
+
+void MAX7219::injectNoop(void)  {
+    SPI.transfer(MAX7219_REG_NOOP);
+    SPI.transfer(0x00);
+};
