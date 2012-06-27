@@ -2,6 +2,7 @@ Arduino MAX7219/7221 Library
 
 Written by Eberhard Fahle in 2007
 Refactoring, cosmetic changes and hardware SPI by Radu - Eosif Mihailescu <radu.mihailescu@linux360.ro> 2012-04-13
+Bug spotting in 7-Segment example by John Williams <mrjtwill at yahoo.com> 2012-06-27
 
 To the furthest extent that this is legally possible, the fork maintained by 
 Radu - Eosif Mihailescu and published here https://github.com/csdexter/MAX7219

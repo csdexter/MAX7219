@@ -62,7 +62,7 @@ void countDown() {
   for(byte i = 99; i > 0; i--) {
     itoa(i, buf, 10);
     //Show a space (blank digit) instead of a zero
-    buf[strlen(buf)] = " ";
+    buf[strlen(buf)] = ' ';
     maxled.set7Segment(buf);
     delay(delaytime);
   }
