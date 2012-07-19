@@ -4,8 +4,8 @@
  * version: https://github.com/csdexter/MAX7219/blob/master/README
  *
  * This library is for use with Maxim's MAX7219 and MAX7221 LED driver chips.
- * Austria Micro Systems' AS1100 is a pin-for-pin compatible and is also
- * supported, including its extra functionality in register 0xE.
+ * Austria Micro Systems' AS1100/1106/1107 is a pin-for-pin compatible and is
+ * also supported, including its extra functionality in register 0xE.
  * See the example sketches to learn how to use the library in your code.
  *
  * This is the main include file for the library.
@@ -59,6 +59,8 @@
 #define MAX7219_REG_SHUTDOWN 0x0C
 //MAX7219 prefix for consistency, even if AS1100 specific
 #define MAX7219_REG_RESETCLOCK 0x0E
+//MAX7219 prefix for consistency, even if AS1106/1107 specific
+#define MAX7219_REG_FEATURE 0x0E
 #define MAX7219_REG_DISPLAYTEST 0x0F
 
 //Define MAX7219 Flags
@@ -72,25 +74,54 @@
 #define MAX7219_FLG_SEGG 0x01
 #define MAX7219_FLG_DIGIT0_RAW 0x00
 #define MAX7219_FLG_DIGIT0_CODEB 0x01
+#define MAX7219_FLG_DIGIT0_DECODE 0x01
 #define MAX7219_FLG_DIGIT1_RAW 0x00
 #define MAX7219_FLG_DIGIT1_CODEB 0x02
+#define MAX7219_FLG_DIGIT1_DECODE 0x02
 #define MAX7219_FLG_DIGIT2_RAW 0x00
 #define MAX7219_FLG_DIGIT2_CODEB 0x04
+#define MAX7219_FLG_DIGIT2_DECODE 0x04
 #define MAX7219_FLG_DIGIT3_RAW 0x00
 #define MAX7219_FLG_DIGIT3_CODEB 0x08
+#define MAX7219_FLG_DIGIT3_DECODE 0x08
 #define MAX7219_FLG_DIGIT4_RAW 0x00
 #define MAX7219_FLG_DIGIT4_CODEB 0x10
+#define MAX7219_FLG_DIGIT4_DECODE 0x10
 #define MAX7219_FLG_DIGIT5_RAW 0x00
 #define MAX7219_FLG_DIGIT5_CODEB 0x20
+#define MAX7219_FLG_DIGIT5_DECODE 0x20
 #define MAX7219_FLG_DIGIT6_RAW 0x00
 #define MAX7219_FLG_DIGIT6_CODEB 0x40
+#define MAX7219_FLG_DIGIT6_DECODE 0x40
 #define MAX7219_FLG_DIGIT7_RAW 0x00
 #define MAX7219_FLG_DIGIT7_CODEB 0x80
+#define MAX7219_FLG_DIGIT7_DECODE 0x80
 #define MAX7219_FLG_SHUTDOWN 0x01
+//MAX7219 prefix for consistency, even if AS1106/1107 specific
+#define MAX7219_FLG_SAVEFEATURE 0x80
 #define MAX7219_FLG_DISPLAYTEST 0x01
-//MAX7219 prefix for consistency, even if AS1100 specific
-#define MAX7219_FLG_RESET 0x02
+//MAX7219 prefix for consistency, even if AS1100/1106/1107 specific
 #define MAX7219_FLG_EXTERNAL_CLOCK 0x01
+//MAX7219 prefix for consistency, even if AS1100/1106/1107 specific
+#define MAX7219_FLG_RESET 0x02
+//MAX7219 prefix for consistency, even if AS1106/1107 specific
+#define MAX7219_FLG_DECODE_CODEB 0x00
+//MAX7219 prefix for consistency, even if AS1106/1107 specific
+#define MAX7219_FLG_DECODE_HEX 0x04
+//MAX7219 prefix for consistency, even if AS1106 specific
+#define MAX7219_FLG_ENABLE_SPI 0x08
+//MAX7219 prefix for consistency, even if AS1106/1107 specific
+#define MAX7219_FLG_ENABLE_BLINK 0x10
+//MAX7219 prefix for consistency, even if AS1106/1107 specific
+#define MAX7219_FLG_BLINK_FREQ1 0x00
+//MAX7219 prefix for consistency, even if AS1106/1107 specific
+#define MAX7219_FLG_BLINK_FREQ2 0x20
+//MAX7219 prefix for consistency, even if AS1106/1107 specific
+#define MAX7219_FLG_BLINK_SYNC 0x40
+//MAX7219 prefix for consistency, even if AS1106/1107 specific
+#define MAX7219_FLG_BLINK_START_OFF 0x00
+//MAX7219 prefix for consistency, even if AS1106/1107 specific
+#define MAX7219_FLG_BLINK_START_ON 0x80
 
 //Define per-digit operation modes
 #define MAX7219_MODE_7SEGMENT 0x01
@@ -163,12 +194,16 @@ class MAX7219
         *   Sets the selected chip to shutdown/powered mode
         * Parameters:
         * 	chip - the index of the chip to control
+        *       saveFR - [AS1106/1107] save (do not reset) the feature register
         */
-        void shutdown(byte chip = 0) {
-            writeRegister(MAX7219_REG_SHUTDOWN, 0x00, chip);
+        void shutdown(byte chip = 0, boolean saveFR = false) {
+            writeRegister(MAX7219_REG_SHUTDOWN,
+                          (saveFR ? MAX7219_FLG_SAVEFEATURE : 0x00), chip);
         };
-        void noShutdown(byte chip = 0) {
-            writeRegister(MAX7219_REG_SHUTDOWN, MAX7219_FLG_SHUTDOWN, chip);
+        void noShutdown(byte chip = 0, boolean saveFR = false) {
+            writeRegister(MAX7219_REG_SHUTDOWN,
+                          (saveFR ? MAX7219_FLG_SAVEFEATURE : 0x00) |
+                          MAX7219_FLG_SHUTDOWN, chip);
         };
 
         /* 
@@ -211,10 +246,10 @@ class MAX7219
 
         /* 
         * Description:
-        *   [AS1100] Switch the chip to external clock and/or reset it.
+        *   [AS1100/1106/1107] Control the feature register.
         */
-        void setExternalClock(byte flags, byte chip = 0) {
-            writeRegister(MAX7219_REG_RESETCLOCK, flags, chip);
+        void setFeatureRegister(byte flags, byte chip = 0) {
+            writeRegister(MAX7219_REG_FEATURE, flags, chip);
         };
 
         /* 
