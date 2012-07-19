@@ -4,6 +4,8 @@
  * version: https://github.com/csdexter/MAX7219/blob/master/README
  *
  * This library is for use with Maxim's MAX7219 and MAX7221 LED driver chips.
+ * Austria Micro Systems' AS1100 is a pin-for-pin compatible and is also
+ * supported, including its extra functionality in register 0xE.
  * See the example sketches to learn how to use the library in your code.
  *
  * This is the main code file for the library.

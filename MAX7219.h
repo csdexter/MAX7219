@@ -4,6 +4,8 @@
  * version: https://github.com/csdexter/MAX7219/blob/master/README
  *
  * This library is for use with Maxim's MAX7219 and MAX7221 LED driver chips.
+ * Austria Micro Systems' AS1100 is a pin-for-pin compatible and is also
+ * supported, including its extra functionality in register 0xE.
  * See the example sketches to learn how to use the library in your code.
  *
  * This is the main include file for the library.
@@ -55,6 +57,8 @@
 #define MAX7219_REG_INTENSITY 0x0A
 #define MAX7219_REG_SCANLIMIT 0x0B
 #define MAX7219_REG_SHUTDOWN 0x0C
+//MAX7219 prefix for consistency, even if AS1100 specific
+#define MAX7219_REG_RESETCLOCK 0x0E
 #define MAX7219_REG_DISPLAYTEST 0x0F
 
 //Define MAX7219 Flags
@@ -84,6 +88,9 @@
 #define MAX7219_FLG_DIGIT7_CODEB 0x80
 #define MAX7219_FLG_SHUTDOWN 0x01
 #define MAX7219_FLG_DISPLAYTEST 0x01
+//MAX7219 prefix for consistency, even if AS1100 specific
+#define MAX7219_FLG_RESET 0x02
+#define MAX7219_FLG_EXTERNAL_CLOCK 0x01
 
 //Define per-digit operation modes
 #define MAX7219_MODE_7SEGMENT 0x01
@@ -204,6 +211,14 @@ class MAX7219
 
         /* 
         * Description:
+        *   [AS1100] Switch the chip to external clock and/or reset it.
+        */
+        void setExternalClock(byte flags, byte chip = 0) {
+            writeRegister(MAX7219_REG_RESETCLOCK, flags, chip);
+        };
+
+        /* 
+        * Description:
         *   Switch all LEDs belonging to the given topology element off. 
         * Parameters:
         *   topo - the index of the topology element to switch off
@@ -255,6 +270,7 @@ class MAX7219
     private:
         const MAX7219_Topology *_topology;
         byte _pinLOAD, _elements, _chips;
+        boolean _isAS1100;
         
         /*
         * Description:

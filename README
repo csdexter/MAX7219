@@ -3,6 +3,7 @@ Arduino MAX7219/7221 Library
 Written by Eberhard Fahle in 2007
 Refactoring, cosmetic changes and hardware SPI by Radu - Eosif Mihailescu <radu.mihailescu@linux360.ro> 2012-04-13
 Bug spotting in 7-Segment example by John Williams <mrjtwill at yahoo.com> 2012-06-27
+AS1100 support by Radu - Eosif Mihailescu <radu.mihailescu@linux360.ro> 2012-07-19
 
 To the furthest extent that this is legally possible, the fork maintained by 
 Radu - Eosif Mihailescu and published here https://github.com/csdexter/MAX7219
@@ -13,6 +14,11 @@ with the authors listed above.
 See the example sketches to learn how to use the library in your code.
 
 HARDWARE NOTES:
+ * The AS1100 is pin-for-pin compatible with the MAX7219. It does have a bit of
+   extra functionality in register 0xE which can also be accessed with this
+   library. Apart from that, it behaves identically to the MAX7219 so everything
+   explained here and in the examples about the former, equally applies to the
+   AS1100.
  * The MAX7219/7221 are 5V I/O driver chips that power their loads from the
    digital 5V rail. This means you will need to find another power supply to
    feed the MAX if you plan to use more than one of them (the power regulator
