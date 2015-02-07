@@ -34,9 +34,9 @@
 #define _MAX7219_H_INCLUDED
 
 #if defined(ARDUINO) && ARDUINO >= 100
-# include <Arduino.h>  
+# include <Arduino.h>
 #else
-# include <WProgram.h>  
+# include <WProgram.h>
 #endif
 
 //Assign the SPI pin numbers
@@ -165,8 +165,8 @@ class MAX7219
         *   This is the destructor, it simply calls end().
         */
         ~MAX7219() { end(); };
-        
-        /* 
+
+        /*
         * Description:
         *   Sets the topology of the display.
         * Parameters:
@@ -188,8 +188,8 @@ class MAX7219
         *   extrapolated from the current topology.
         */
         byte getChipCount(void) { return _chips; };
-        
-        /* 
+
+        /*
         * Description:
         *   Sets the selected chip to shutdown/powered mode
         * Parameters:
@@ -206,7 +206,7 @@ class MAX7219
                           MAX7219_FLG_SHUTDOWN, chip);
         };
 
-        /* 
+        /*
         * Description:
         *   Sets the selected chip to display test/normal mode
         * Parameters:
@@ -220,7 +220,7 @@ class MAX7219
             writeRegister(MAX7219_REG_DISPLAYTEST, 0x00, chip);
         };
 
-        /* 
+        /*
         * Description:
         *   Set the number of digits, bargraph columns or matrix rows to be
         *   scanned by the selected chip. See datasheet for side effects of
@@ -233,7 +233,7 @@ class MAX7219
             writeRegister(MAX7219_REG_SCANLIMIT, limit, chip);
         };
 
-        /* 
+        /*
         * Description:
         *   Set the brightness of the display.
         * Parameters:
@@ -244,7 +244,7 @@ class MAX7219
             writeRegister(MAX7219_REG_INTENSITY, intensity, chip);
         };
 
-        /* 
+        /*
         * Description:
         *   [AS1100/1106/1107] Control the feature register.
         */
@@ -252,14 +252,14 @@ class MAX7219
             writeRegister(MAX7219_REG_FEATURE, flags, chip);
         };
 
-        /* 
+        /*
         * Description:
         *   Switch all LEDs belonging to the given topology element off. 
         * Parameters:
         *   topo - the index of the topology element to switch off
         */
         void clearDisplay(byte topo = 0);
-        
+
         /*
         * Description:
         *   Reset topology element to a meaningful zero. This involves
@@ -268,8 +268,8 @@ class MAX7219
         *   pixel in the bottom left corner on matrices.
         */
         void zeroDisplay(byte topo = 0);
-        
-        /* 
+
+        /*
         * Description:
         *   Displays the given number on the given topology element, 
         *   previously configured as a 7-segment display.
@@ -277,10 +277,14 @@ class MAX7219
         *   number - [0-9-EeHhLlPp ]. Set bit 7 on any character whose
         *            corresponding digit should have DP on.
         *   topo   - topology element to update (must be 7-segment)
+        *   mirror - format output in reverse, i.e. '0123' is displayed as
+        *            '3210'. This is meant for the sad cases when you haven't
+        *            read the README before sending out your gerbers to the fab.
         */
-        void set7Segment(const char *number, byte topo = 0);
-        
-        /* 
+        void set7Segment(const char *number, byte topo = 0,
+                         bool mirror = false);
+
+        /*
         * Description:
         *   Displays the given bar/dot values on the given topology element, 
         *   previously configured as a bargraph display.
@@ -291,7 +295,7 @@ class MAX7219
         */
         void setBarGraph(const byte *values, boolean dot = false, 
                          byte topo = 0);
-        
+
         /*
         * Description:
         *   Displays the given pixel values on the given topology element, 
@@ -306,7 +310,7 @@ class MAX7219
         const MAX7219_Topology *_topology;
         byte _pinLOAD, _elements, _chips;
         boolean _isAS1100;
-        
+
         /*
         * Description:
         *   Write to one of the chip registers, on a single chip, via SPI.

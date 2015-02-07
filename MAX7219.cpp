@@ -39,7 +39,7 @@
 
 void MAX7219::begin(const MAX7219_Topology *topology, const byte length) {
     MAX7219_Topology *defaultTopo;
-    
+
     if(topology) {
         _topology = topology;
         _elements = length;
@@ -47,13 +47,13 @@ void MAX7219::begin(const MAX7219_Topology *topology, const byte length) {
         //Yes, we are leaking memory here. Yet again, in embedded software
         //things usually get allocated at start and never die off as there's
         //no exit();
-        defaultTopo = (MAX7219_Topology *)malloc(sizeof(MAX7219_Topology) * 
+        defaultTopo = (MAX7219_Topology *)malloc(sizeof(MAX7219_Topology) *
                                                  MAX7219_DEFAULT_LENGTH);
         MAX7219_DEFAULT_TOPOLOGY(defaultTopo);
         _topology = defaultTopo;
         _elements = MAX7219_DEFAULT_LENGTH;
     };
-    
+
     _chips = 0;
     for(int i = 0; i < length; i++)
         if(_topology[i].chipTo > _chips) 
@@ -73,7 +73,7 @@ void MAX7219::begin(const MAX7219_Topology *topology, const byte length) {
     //2MHz (as you would get on the Uno/Mega) is twice that and if you find
     //yourself needing more, you shouldn't be using Arduino anyway
     SPI.setClockDivider(SPI_CLOCK_DIV8);
-    
+
     //Since the MAX7219 does not have a RESET, we must enforce consistency
     noDisplayTest(MAX7219_CHIP_ALL);
     setScanLimit(0x07, MAX7219_CHIP_ALL);
@@ -85,7 +85,7 @@ void MAX7219::begin(const MAX7219_Topology *topology, const byte length) {
                   MAX7219_FLG_DIGIT6_RAW | MAX7219_FLG_DIGIT7_RAW,
                   MAX7219_CHIP_ALL);
     noShutdown(MAX7219_CHIP_ALL);
-    
+
     for(int i = 0; i < _elements; i++) {
         if(_topology[i].elementType == MAX7219_MODE_NC) 
             setScanLimit(_topology[i].digitFrom - 1, _topology[i].chipFrom);
@@ -130,7 +130,7 @@ void MAX7219::zeroDisplay(byte topo) {
 
     if(_topology[topo].elementType == MAX7219_MODE_OFF ||
        _topology[topo].elementType == MAX7219_MODE_NC) return;
-  
+
     digits = getDigitCount(topo);
     buf = (byte *)malloc(digits * sizeof(byte));
     switch(_topology[topo].elementType) {
@@ -145,16 +145,16 @@ void MAX7219::zeroDisplay(byte topo) {
             memset((void *)buf, 0x01, digits * sizeof(byte));
             break;
     }
-    setDigits(buf, topo);    
+    setDigits(buf, topo);
     free(buf);
 }
 
-void MAX7219::set7Segment(const char *number, byte topo) {
+void MAX7219::set7Segment(const char *number, byte topo, bool mirror) {
     byte *buf, chr;
     word digits;
 
     if(_topology[topo].elementType != MAX7219_MODE_7SEGMENT) return;
-  
+
     digits = getDigitCount(topo);
     buf = (byte *)calloc(digits, sizeof(byte));
     for(word i = 0; i < digits; i++) {
@@ -200,9 +200,16 @@ void MAX7219::set7Segment(const char *number, byte topo) {
             case ' ':
                 buf[i] |= 0x0F;
                 break;
-        } 
+        }
     }
-    setDigits(buf, topo);    
+    if (mirror) {
+      for (word i = 0; i < digits; i++) {
+        chr = buf[i];
+        buf[i] = buf[digits - 1 - i];
+        buf[digits - 1 - i] = chr;
+      }
+    }
+    setDigits(buf, topo);
     free(buf);
 }
 
@@ -223,45 +230,45 @@ void MAX7219::setBarGraph(const byte *values, boolean dot, byte topo){
                 for(int j = 0; j < values[i]; j++) buf[i] |= 1 << j;
             }
     }
-    setDigits(buf, topo);    
+    setDigits(buf, topo);
     free(buf);  
 }
 
 void MAX7219::setMatrix(const byte *values, byte topo) {
     if(_topology[topo].elementType != MAX7219_MODE_MATRIX) return;
-  
+
     setDigits(values, topo);
 }
 
 void MAX7219::writeRegister(byte addr, byte value, byte chip) {
     word cmd, *buf;
-    
+
     cmd = word(addr, value);
     if(chip == MAX7219_CHIP_ALL) {
       buf = (word *)malloc(_chips * sizeof(word));
-      
+
       for(byte i = 0; i < _chips; i++) buf[i] = cmd;
       writeRegisters(buf, _chips, 0);
-      
+
       free(buf);
     } else writeRegisters(&cmd, 1, chip);
 }
 
 void MAX7219::writeRegisters(const word *registers, byte size, byte chip) {
     digitalWrite(_pinLOAD, LOW);
-    
+
     //Datasheet calls for 25ns between LOAD/#CS going low and the start of the
     //transfer, Arduino can only go as low as 3us
     delayMicroseconds(5);
 
     for(byte i = 0; i < _chips - (chip + size); i++) injectNoop();
-    
+
     for(byte i = size; i > 0; i--) {
         SPI.transfer(highByte(registers[i - 1]));
         SPI.transfer(lowByte(registers[i - 1]));
     }
     for(byte i = 0; i < chip; i++) injectNoop();
-    
+
     digitalWrite(_pinLOAD, HIGH);
 #if defined(MAX7219_DEBUG)
     Serial.print("Wrote (register, value) pairs {");
@@ -284,7 +291,7 @@ void MAX7219::setDigits(const byte *values, byte topo) {
     word *buf;
     word transfers;
     byte chips;
-    
+
     chips = _topology[topo].chipTo - _topology[topo].chipFrom + 1;
     buf = (word *)malloc(chips * sizeof(word));
     transfers = (_topology[topo].chipFrom == _topology[topo].chipTo ? 
@@ -300,7 +307,7 @@ void MAX7219::setDigits(const byte *values, byte topo) {
     Serial.print(", element: ");
     Serial.println(topo);
 #endif
-    
+
     for (word i = 0; i < transfers; i++) {
         for(byte j = 0; j < chips; j++)
             if(i < (j == _topology[topo].chipFrom ? 
@@ -314,7 +321,7 @@ void MAX7219::setDigits(const byte *values, byte topo) {
                 buf[j] = word(MAX7219_REG_NOOP, 0x00);
         writeRegisters(buf, chips, _topology[topo].chipFrom);
     }
-    
+
     free(buf); 
 }
 
