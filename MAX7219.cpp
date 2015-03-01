@@ -34,8 +34,10 @@
  */
 
 #include "MAX7219.h"
+#include "MAX7219-private.h"
 
 #include <SPI.h>
+
 
 void MAX7219::begin(const MAX7219_Topology *topology, const byte length) {
     MAX7219_Topology *defaultTopo;
@@ -78,16 +80,16 @@ void MAX7219::begin(const MAX7219_Topology *topology, const byte length) {
     noDisplayTest(MAX7219_CHIP_ALL);
     setScanLimit(0x07, MAX7219_CHIP_ALL);
     setIntensity(0x08, MAX7219_CHIP_ALL);
-    writeRegister(MAX7219_REG_DECODEMODE, 
-                  MAX7219_FLG_DIGIT0_RAW | MAX7219_FLG_DIGIT1_RAW | 
-                  MAX7219_FLG_DIGIT2_RAW | MAX7219_FLG_DIGIT3_RAW | 
-                  MAX7219_FLG_DIGIT4_RAW | MAX7219_FLG_DIGIT5_RAW | 
+    writeRegister(MAX7219_REG_DECODEMODE,
+                  MAX7219_FLG_DIGIT0_RAW | MAX7219_FLG_DIGIT1_RAW |
+                  MAX7219_FLG_DIGIT2_RAW | MAX7219_FLG_DIGIT3_RAW |
+                  MAX7219_FLG_DIGIT4_RAW | MAX7219_FLG_DIGIT5_RAW |
                   MAX7219_FLG_DIGIT6_RAW | MAX7219_FLG_DIGIT7_RAW,
                   MAX7219_CHIP_ALL);
     noShutdown(MAX7219_CHIP_ALL);
 
     for(int i = 0; i < _elements; i++) {
-        if(_topology[i].elementType == MAX7219_MODE_NC) 
+        if(_topology[i].elementType == MAX7219_MODE_NC)
             setScanLimit(_topology[i].digitFrom - 1, _topology[i].chipFrom);
         if(_topology[i].elementType == MAX7219_MODE_7SEGMENT)
             for(int j = 0; j < _topology[i].chipTo - _topology[i].chipFrom +
@@ -137,6 +139,11 @@ void MAX7219::zeroDisplay(byte topo) {
         case MAX7219_MODE_7SEGMENT:
             memset((void *)buf, 0x00, digits * sizeof(byte));
             break;
+        case MAX7219_MODE_16SEGMENT:
+          // use pgm_read to fetch the zero character here
+            buf[0] = highByte();
+            but[1] = lowByte();
+            memset((void *)&buf[2], 0x00, (digits - 2) * sizeof(byte));
         case MAX7219_MODE_MATRIX:
             buf[0] = 0x01;
             memset((void *)&buf[1], 0x00, (digits - 1) * sizeof(byte));
@@ -164,7 +171,7 @@ void MAX7219::set7Segment(const char *number, byte topo, bool mirror) {
             buf[i] |= MAX7219_FLG_SEGDP;
             chr &= ~MAX7219_FLG_SEGDP; 
         }
-        //Cheaper than using atoi() or a lookup table
+        //Cheaper than using atoi() or a PROGMEM lookup table
         switch(chr) {
             case '0':
             case '1':
@@ -213,12 +220,27 @@ void MAX7219::set7Segment(const char *number, byte topo, bool mirror) {
     free(buf);
 }
 
+void MAX7219::set16Segment(const char *text, byte topo) {
+    byte *buf;
+    word digits;
+
+    if(_topology[topo].elementType != MAX7219_MODE_16SEGMENT) return;
+
+    digits = getDigitCount(topo);
+    buf = (word *)calloc(digits, sizeof(byte));
+    for(word i = 0; i < digits / 2; i++) {
+      // use pgm_read to index font with text and fill buf with words accordingly
+    }
+    setDigits(buf, topo);
+    free(buf);
+}
+
 void MAX7219::setBarGraph(const byte *values, boolean dot, byte topo){
     byte *buf;
     word digits;
 
     if(_topology[topo].elementType != MAX7219_MODE_BARGRAPH) return;
-  
+
     digits = getDigitCount(topo);
     buf = (byte *)malloc(digits * sizeof(byte));
     for(byte i = 0; i < digits; i++) {

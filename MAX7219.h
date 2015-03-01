@@ -127,10 +127,11 @@
 #define MAX7219_MODE_7SEGMENT 0x01
 #define MAX7219_MODE_MATRIX 0x02
 #define MAX7219_MODE_BARGRAPH 0x03
+#define MAX7219_MODE_16SEGMENT 0x04
 //Don't touch this digit
-#define MAX7219_MODE_OFF 0x04
+#define MAX7219_MODE_OFF 0xFD
 //Don't scan this digit
-#define MAX7219_MODE_NC 0x05
+#define MAX7219_MODE_NC 0xFE
 
 //Define broadcast flag
 #define MAX7219_CHIP_ALL 0xFF
@@ -271,8 +272,8 @@ class MAX7219
 
         /*
         * Description:
-        *   Displays the given number on the given topology element, 
-        *   previously configured as a 7-segment display.
+        *   Displays the given number on the given topology element, previously
+        *   configured as a 7-segment display.
         * Parameters:
         *   number - [0-9-EeHhLlPp ]. Set bit 7 on any character whose
         *            corresponding digit should have DP on.
@@ -286,7 +287,17 @@ class MAX7219
 
         /*
         * Description:
-        *   Displays the given bar/dot values on the given topology element, 
+        *   Displays the given text on the given topology element, previously
+        *   configured as a 16-segment display.
+        * Parameters:
+        *   text   - [!-~ ]
+        *   topo   - topology element to update (must be 16-segment)
+        */
+        void set16Segment(const char *text, byte topo = 0);
+
+        /*
+        * Description:
+        *   Displays the given bar/dot values on the given topology element,
         *   previously configured as a bargraph display.
         * Parameters:
         *   values - [0, 8]
@@ -298,7 +309,7 @@ class MAX7219
 
         /*
         * Description:
-        *   Displays the given pixel values on the given topology element, 
+        *   Displays the given pixel values on the given topology element,
         *   previously configured as a matrix.
         * Parameters:
         *   values - [0, 0xFF]
