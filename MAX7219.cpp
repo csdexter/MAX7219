@@ -137,13 +137,27 @@ void MAX7219::zeroDisplay(byte topo) {
     buf = (byte *)malloc(digits * sizeof(byte));
     switch(_topology[topo].elementType) {
         case MAX7219_MODE_7SEGMENT:
-            memset((void *)buf, 0x00, digits * sizeof(byte));
+            //Right justify with spaces
+            memset((void *)buf, 0x0F, (digits - 1) * sizeof(byte));
+            //Display a zero and turn on the DP in the rightmost digit
+            buf[digits - 1] = 0x80;
             break;
         case MAX7219_MODE_16SEGMENT:
-          // use pgm_read to fetch the zero character here
-            buf[0] = highByte();
-            but[1] = lowByte();
-            memset((void *)&buf[2], 0x00, (digits - 2) * sizeof(byte));
+            //Fetch the space glyph ...
+            word glyph = pgm_read_word(
+                &MAX7219_16Seg_Font[_MAX7219_16SEGMENT_SPACE]);
+            //... and render it enough times to right justify the final zero.
+            for(byte i = 0; i < digits / 2 - 1; i++) {
+                buf[i * 2] = highByte(glyph);
+                but[i * 2 + 1] = lowByte(glyph);
+            };
+            //Fetch the zero glyph ...
+            word glyph = pgm_read_word(
+                &MAX7219_16Seg_Font[_MAX7219_16SEGMENT_ZERO]);
+            //... and render it in the rightmost position.
+            buf[digits - 2] = highByte(glyph);
+            buf[digits - 1] = lowByte(glyph);
+            break;
         case MAX7219_MODE_MATRIX:
             buf[0] = 0x01;
             memset((void *)&buf[1], 0x00, (digits - 1) * sizeof(byte));

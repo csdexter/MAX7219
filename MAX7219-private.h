@@ -15,6 +15,7 @@
 #ifndef _MAX7219_PRIVATE_H_INCLUDED
 #define _MAX7219_PRIVATE_H_INCLUDED
 
+#define _MAX7219_16SEGMENT_SPACE 0
 #define _MAX7219_16SEGMENT_ZERO 16
 
 // Font for 16-segment displays (MAX7219 doesn't have a built-in character
@@ -27,7 +28,7 @@
 // A1 A2 B  C  D1 D2 E F
 // 80 40 20 10 8  4  2 1
 // G1 G2 H  I  J  K  L M
-const word MAX7219_16Seg_Font[96] PROGMEM = {
+const word MAX7219_16Seg_Font[] PROGMEM = {
     /* ' ' to '(' */
     0x0000, 0x3000, 0x2010, 0x03D2, 0xDDD2, 0x95DB, 0x8EB4, 0x0010, 0x000C,
     /* ')' to '1' */
