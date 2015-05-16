@@ -15,6 +15,8 @@
 #ifndef _MAX7219_PRIVATE_H_INCLUDED
 #define _MAX7219_PRIVATE_H_INCLUDED
 
+#define _MAX7219_7SEGMENT_SPACE 0x0F
+#define _MAX7219_16SEGMENT_FONT_START ' '
 #define _MAX7219_16SEGMENT_SPACE 0
 #define _MAX7219_16SEGMENT_ZERO 16
 
@@ -25,9 +27,6 @@
 // D0/DP=>A1, D0/A=>A2, D0/B=>B, D0/C=>C, D0/D=>D1, D0/E=>D2, D0/F=>E, D0/G=>F
 // D1/DP=>G1, D1/A=>G2, D1/B=>H, D1/C=>I, D1/D=>J, D1/E=>K, D1/F=>L, D1/G=>M
 // Font begins with ASCII 0x20, also known as space.
-// A1 A2 B  C  D1 D2 E F
-// 80 40 20 10 8  4  2 1
-// G1 G2 H  I  J  K  L M
 const word MAX7219_16Seg_Font[] PROGMEM = {
     /* ' ' to '(' */
     0x0000, 0x3000, 0x2010, 0x03D2, 0xDDD2, 0x95DB, 0x8EB4, 0x0010, 0x000C,
@@ -43,6 +42,14 @@ const word MAX7219_16Seg_Font[] PROGMEM = {
     0x3328, 0x3324, 0xFF00, 0xE3C0, 0xFF04, 0xE3C4, 0xDDC0, 0xC012, 0x3F00,
     /* 'V' to '^' */
     0x0309, 0x3305, 0x002D, 0x21C2, 0xCC09, 0x4412, 0x0024, 0x8812, 0x0005,
+    /* '_' to 'g' */
+    0x0C00, 0x0020, 0x0AA2, 0x0B82, 0x0A80, 0x0A92, 0x0E81, 0x40D2, 0x8992,
+    /* 'h' to 'p' */
+    0x0382, 0x0002, 0x0A12, 0x001E, 0x0012, 0x12C2, 0x0282, 0x0A82, 0x8390,
+    /* 'q' to 'y' */
+    0x8192, 0x0280, 0x8982, 0x04D2, 0x0A02, 0x0201, 0x1205, 0x001B, 0x002A,
+    /* 'z' to '~' */
+    0x0882, 0x4492, 0x0300, 0x8852, 0xA150
 };
 
 #endif

@@ -121,7 +121,9 @@ void MAX7219::clearDisplay(byte topo) {
     digits = getDigitCount(topo);
     buf = (byte *)calloc(digits, sizeof(byte));
     if(_topology[topo].elementType == MAX7219_MODE_7SEGMENT)
-      memset((void *)buf, 0x0F, digits * sizeof(byte)); 
+      //MAX7219 would decode 0x00 to a 7-segment '0' character, so we have to
+      //use a magic value to get a space instead.
+      memset((void *)buf, _MAX7219_7SEGMENT_SPACE, digits * sizeof(byte)); 
     setDigits(buf, topo);
     free(buf);
 }
@@ -135,34 +137,30 @@ void MAX7219::zeroDisplay(byte topo) {
 
     digits = getDigitCount(topo);
     buf = (byte *)malloc(digits * sizeof(byte));
+    word glyph;
     switch(_topology[topo].elementType) {
         case MAX7219_MODE_7SEGMENT:
-            //Right justify with spaces
-            memset((void *)buf, 0x0F, (digits - 1) * sizeof(byte));
-            //Display a zero and turn on the DP in the rightmost digit
-            buf[digits - 1] = 0x80;
+            //Right justify with spaces ...
+            memset((void *)buf, ' ', (digits - 1) * sizeof(byte));
+            //... and display a zero with DP in the rightmost digit.
+            buf[digits - 1] = '0' | '\x80';
+            set7Segment((const char *)buf, topo);
             break;
         case MAX7219_MODE_16SEGMENT:
-            //Fetch the space glyph ...
-            word glyph = pgm_read_word(
-                &MAX7219_16Seg_Font[_MAX7219_16SEGMENT_SPACE]);
-            //... and render it enough times to right justify the final zero.
-            for(byte i = 0; i < digits / 2 - 1; i++) {
-                buf[i * 2] = highByte(glyph);
-                but[i * 2 + 1] = lowByte(glyph);
-            };
-            //Fetch the zero glyph ...
-            word glyph = pgm_read_word(
-                &MAX7219_16Seg_Font[_MAX7219_16SEGMENT_ZERO]);
-            //... and render it in the rightmost position.
-            buf[digits - 2] = highByte(glyph);
-            buf[digits - 1] = lowByte(glyph);
+            //Left justify with spaces ...
+            memset((void *)&buf[1], ' ', (digits - 1) * sizeof(byte));
+            //... and display an underscore in the leftmost digit.
+            buf[0] = '_';
+            set16Segment((const char *)buf, topo);
             break;
         case MAX7219_MODE_MATRIX:
-            buf[0] = 0x01;
+            //Clear the matrix ...
             memset((void *)&buf[1], 0x00, (digits - 1) * sizeof(byte));
+            //... and display a single pixel in the corner.
+            buf[0] = 0x01;
             break;
         case MAX7219_MODE_BARGRAPH:
+            //Display a line across the bottom of all bargraph columns.
             memset((void *)buf, 0x01, digits * sizeof(byte));
             break;
     }
@@ -177,7 +175,7 @@ void MAX7219::set7Segment(const char *number, byte topo, bool mirror) {
     if(_topology[topo].elementType != MAX7219_MODE_7SEGMENT) return;
 
     digits = getDigitCount(topo);
-    buf = (byte *)calloc(digits, sizeof(byte));
+    buf = (byte *)malloc(digits);
     for(word i = 0; i < digits; i++) {
         chr = number[i];
         //Set DP if so instructed
@@ -219,7 +217,7 @@ void MAX7219::set7Segment(const char *number, byte topo, bool mirror) {
                 buf[i] |= 0x0E;
                 break;
             case ' ':
-                buf[i] |= 0x0F;
+                buf[i] |= _MAX7219_7SEGMENT_SPACE;
                 break;
         }
     }
@@ -236,14 +234,19 @@ void MAX7219::set7Segment(const char *number, byte topo, bool mirror) {
 
 void MAX7219::set16Segment(const char *text, byte topo) {
     byte *buf;
-    word digits;
+    word digits, glyph;
 
     if(_topology[topo].elementType != MAX7219_MODE_16SEGMENT) return;
 
     digits = getDigitCount(topo);
-    buf = (word *)calloc(digits, sizeof(byte));
+    buf = (byte *)malloc(digits);
     for(word i = 0; i < digits / 2; i++) {
-      // use pgm_read to index font with text and fill buf with words accordingly
+        //Fetch the glyph from the font ...
+        glyph = pgm_read_word(
+            &MAX7219_16Seg_Font[text[i] - _MAX7219_16SEGMENT_FONT_START]);
+        //... and render it in the framebuffer.
+        buf[i * 2] = highByte(glyph);
+        buf[i * 2 + 1] = lowByte(glyph);
     }
     setDigits(buf, topo);
     free(buf);

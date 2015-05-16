@@ -42,8 +42,8 @@
 
 #include <MAX7219.h>
 
-const MAX7219_Topology topology[2] = {{MAX7219_MODE_BARGRAPH, 0, 0, 0, 3},
-                                      {MAX7219_MODE_NC, 0, 4, 0, 7}};
+const MAX7219_Topology topology[] = {{MAX7219_MODE_BARGRAPH, 0, 0, 0, 3},
+                                     {MAX7219_MODE_NC, 0, 4, 0, 7}};
 /* we always wait a bit between updates of the display */
 const byte delaytime = 125;
 
@@ -67,7 +67,7 @@ void scrollWave(bool mode){
   framebuffer[2] = 1;
   maxled.setBarGraph(framebuffer, mode);
   delay(delaytime);
-  
+
   //Animate
   for(byte i = 0; i < 13; i++) {
     peak = oldpeak;
@@ -85,7 +85,7 @@ void scrollWave(bool mode){
     maxled.setBarGraph(framebuffer, mode);
     delay(delaytime);
   }
-  
+
   //Fade out
   for(byte i = 0; i < 4; i++) {
     //j must first become negative for the exit-condition to become true and the

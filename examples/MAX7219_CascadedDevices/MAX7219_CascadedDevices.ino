@@ -63,15 +63,15 @@
 
 #include <MAX7219.h>
 
-const MAX7219_Topology topology[5] = {{MAX7219_MODE_7SEGMENT, 0, 0, 0, 3},
-                                      {MAX7219_MODE_OFF, 0, 4, 0, 6},
-                                      {MAX7219_MODE_BARGRAPH, 0, 7, 1, 0},
-                                      {MAX7219_MODE_OFF, 1, 1, 1, 2},
-                                      {MAX7219_MODE_MATRIX, 1, 3, 1, 7}};
+const MAX7219_Topology topology[] = {{MAX7219_MODE_7SEGMENT, 0, 0, 0, 3},
+                                     {MAX7219_MODE_OFF, 0, 4, 0, 6},
+                                     {MAX7219_MODE_BARGRAPH, 0, 7, 1, 0},
+                                     {MAX7219_MODE_OFF, 1, 1, 1, 2},
+                                     {MAX7219_MODE_MATRIX, 1, 3, 1, 7}};
 #define THE_7SEGMENT 0
 #define THE_BARGRAPH 2
 #define THE_MATRIX 4
-const char alphabet[17] PROGMEM = "0123456789-EHLP ";
+const char alphabet[] PROGMEM = "0123456789-EHLP ";
 /* we always wait a bit between updates of the display */
 const byte delaytime = 250;
 
@@ -88,25 +88,25 @@ void loop() {
   char ssfb[4];
   byte bgfb[2];
   byte matrixfb[5];
-  
+
   for(byte i = 0; i < 13; i++) {
     //7-segment animation frame
     for(byte j = 0; j < 4; j++)
       ssfb[j] = pgm_read_byte(&alphabet[i + j]);
     maxled.set7Segment(ssfb, THE_7SEGMENT);
-    
+
     //BarGraph animation frame
     bgfb[0] = map(i, 0, 12, 0, 8);
     bgfb[1] = map(i, 0, 12, 8, 0);
     maxled.setBarGraph(bgfb, true, THE_BARGRAPH);
-    
+
     //Matrix animation frame
     memset(matrixfb, 0x00, sizeof(matrixfb));
     matrixfb[map(i, 0, 12, 0, 4)] = 0xFF;
     for(byte j = 0; j < 5; j++)
       matrixfb[j] |= 1 << map(i, 0, 12, 0, 6);
     maxled.setMatrix(matrixfb, THE_MATRIX);
-    
+
     delay(delaytime);
   }
 }

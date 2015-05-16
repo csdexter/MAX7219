@@ -28,9 +28,11 @@
 
 #include <MAX7219.h>
 
-const MAX7219_Topology topology[2] = {{MAX7219_MODE_7SEGMENT, 0, 0, 0, 3},
-                                      {MAX7219_MODE_NC, 0, 4, 0, 7}};
-const char alphabet[17] PROGMEM = "0123456789-EHLP ";
+#define _MAX7219_DEMO_DIGITS 4
+
+const MAX7219_Topology topology[] = {{MAX7219_MODE_7SEGMENT, 0, 0, 0, 3},
+                                     {MAX7219_MODE_NC, 0, 4, 0, 7}};
+const char alphabet[] PROGMEM = "0123456789-EHLP ";
 /* we always wait a bit between updates of the display */
 const byte delaytime = 250;
 
@@ -44,9 +46,9 @@ void setup() {
 /* This will scroll the whole 7-segment font on the display. */
 void scrollDigits() {
   char framebuffer[4];
-  
-  for(byte i = 0; i < 13; i++) {
-    for(byte j = 0; j < 4; j++)
+
+  for(byte i = 0; i <= strlen(alphabet) - _MAX7219_DEMO_DIGITS; i++) {
+    for(byte j = 0; j < _MAX7219_DEMO_DIGITS; j++)
       framebuffer[j] = pgm_read_byte(&alphabet[i + j]);
     maxled.set7Segment(framebuffer);
     delay(delaytime);
@@ -57,7 +59,7 @@ void scrollDigits() {
 
 /* This will count down from 100 to zero */
 void countDown() {
-  char buf[5] = "    ";
+  char buf[] = "    ";
 
   for(byte i = 99; i > 0; i--) {
     itoa(i, buf, 10);
@@ -69,7 +71,7 @@ void countDown() {
   maxled.clearDisplay();
   delay(delaytime);
   maxled.set7Segment("----");
-  delay(delaytime);  
+  delay(delaytime);
 }
 
 void loop() { 

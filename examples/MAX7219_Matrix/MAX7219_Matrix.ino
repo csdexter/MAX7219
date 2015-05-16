@@ -157,7 +157,7 @@ void animateArduino() {
           maxled.clearDisplay();
           delay(delaytime / 2);
         }
-      break;  
+      break;
     }
   }
 }
@@ -170,7 +170,7 @@ void rows() {
       maxled.setMatrix(framebuffer);
       delay(delaytime / 2);
       maxled.clearDisplay();
-      delay(delaytime / 2);      
+      delay(delaytime / 2);
     }
     framebuffer[i] = 0x00;
   }
@@ -184,7 +184,7 @@ void columns(){
       maxled.setMatrix(framebuffer);
       delay(delaytime / 2);
       maxled.clearDisplay();
-      delay(delaytime / 2);      
+      delay(delaytime / 2);
     }
   }
 }
