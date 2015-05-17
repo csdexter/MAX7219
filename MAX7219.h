@@ -128,6 +128,7 @@
 #define MAX7219_MODE_MATRIX 0x02
 #define MAX7219_MODE_BARGRAPH 0x03
 #define MAX7219_MODE_16SEGMENT 0x04
+#define MAX7219_MODE_14SEGMENT 0x05
 //Don't touch this digit
 #define MAX7219_MODE_OFF 0xFD
 //Don't scan this digit
@@ -291,12 +292,9 @@ class MAX7219
         *   specified font that starts at character fontStart. Intended for use
         *   with 14- and 16-segment displays.
         * Parameters:
-        *   text - <any character that font provides>. Depending on the topology
-        *          element type, characters such as "." (period) or "'"
-        *          (apostrophe) may display as stand-alone glyphs or may be
-        *          rendered by DPs in adjacent digits. If that is the case, by
-        *          display industry convention, a period displays on the
-        *          previous character and an apostrophe on the next.
+        *   text - <any character that font provides>. Set bit 7 on any
+        *          character whose corresponding digit should have DP on (where
+        *          applicable).
         *   topo - topology element to update.
         *   font - a pointer to an array of words containing the font to be
         *          used, assumed to reside in FLASH.
@@ -315,6 +313,17 @@ class MAX7219
         *   topo - topology element to update (must be 16-segment)
         */
         void set16Segment(const char *text, byte topo = 0);
+
+        /*
+        * Description:
+        *   Displays the given text on the given topology element, previously
+        *   configured as a 14-segment display.
+        * Parameters:
+        *   text - [!-~ ]. Set bit 7 on any character whose corresponding digit
+        *          should have DP on.
+        *   topo - topology element to update (must be 14-segment)
+        */
+        void set14Segment(const char *text, byte topo = 0);
 
         /*
         * Description:

@@ -147,11 +147,15 @@ void MAX7219::zeroDisplay(byte topo) {
             set7Segment((const char *)buf, topo);
             break;
         case MAX7219_MODE_16SEGMENT:
+        case MAX7219_MODE_14SEGMENT:
             //Left justify with spaces ...
             memset((void *)&buf[1], ' ', (digits - 1) * sizeof(byte));
             //... and display an underscore in the leftmost digit.
             buf[0] = '_';
-            set16Segment((const char *)buf, topo);
+            if(_topology[topo].elementType == MAX7219_MODE_16SEGMENT)
+                set16Segment((const char *)buf, topo);
+            else
+                set14Segment((const char *)buf, topo);
             break;
         case MAX7219_MODE_MATRIX:
             //Clear the matrix ...
@@ -258,6 +262,12 @@ void MAX7219::set16Segment(const char *text, byte topo) {
 
     setFromFont(text, topo, MAX7219_16Seg_Font, _MAX7219_16SEGMENT_FONT_START);
 }
+
+void MAX7219::set14Segment(const char *text, byte topo) {
+    _MAX7219_TOPO_TYPE_CHECK(MAX7219_MODE_14SEGMENT);
+
+    setFromFont(text, topo, MAX7219_14Seg_Font, _MAX7219_14SEGMENT_FONT_START);
+};
 
 void MAX7219::setBarGraph(const byte *values, boolean dot, byte topo){
     byte *buf;
