@@ -168,14 +168,17 @@ void MAX7219::zeroDisplay(byte topo) {
     free(buf);
 }
 
+#define _MAX7219_TOPO_TYPE_CHECK(x) \
+    if(_topology[topo].elementType != (x)) return
+
 void MAX7219::set7Segment(const char *number, byte topo, bool mirror) {
     byte *buf, chr;
     word digits;
 
-    if(_topology[topo].elementType != MAX7219_MODE_7SEGMENT) return;
+    _MAX7219_TOPO_TYPE_CHECK(MAX7219_MODE_7SEGMENT);
 
     digits = getDigitCount(topo);
-    buf = (byte *)malloc(digits);
+    buf = (byte *)malloc(digits * sizeof(byte));
     for(word i = 0; i < digits; i++) {
         chr = number[i];
         //Set DP if so instructed
@@ -232,49 +235,51 @@ void MAX7219::set7Segment(const char *number, byte topo, bool mirror) {
     free(buf);
 }
 
-void MAX7219::set16Segment(const char *text, byte topo) {
+void MAX7219::setFromFont(const char *text, byte topo, const word *font,
+                          char fontStart) {
     byte *buf;
     word digits, glyph;
 
-    if(_topology[topo].elementType != MAX7219_MODE_16SEGMENT) return;
-
     digits = getDigitCount(topo);
-    buf = (byte *)malloc(digits);
+    buf = (byte *)malloc(digits * sizeof(byte));
     for(word i = 0; i < digits / 2; i++) {
         //Fetch the glyph from the font ...
-        glyph = pgm_read_word(
-            &MAX7219_16Seg_Font[text[i] - _MAX7219_16SEGMENT_FONT_START]);
+        glyph = pgm_read_word(&font[text[i] - fontStart]);
         //... and render it in the framebuffer.
         buf[i * 2] = highByte(glyph);
         buf[i * 2 + 1] = lowByte(glyph);
     }
     setDigits(buf, topo);
     free(buf);
+};
+
+void MAX7219::set16Segment(const char *text, byte topo) {
+    _MAX7219_TOPO_TYPE_CHECK(MAX7219_MODE_16SEGMENT);
+
+    setFromFont(text, topo, MAX7219_16Seg_Font, _MAX7219_16SEGMENT_FONT_START);
 }
 
 void MAX7219::setBarGraph(const byte *values, boolean dot, byte topo){
     byte *buf;
     word digits;
 
-    if(_topology[topo].elementType != MAX7219_MODE_BARGRAPH) return;
+    _MAX7219_TOPO_TYPE_CHECK(MAX7219_MODE_BARGRAPH);
 
     digits = getDigitCount(topo);
     buf = (byte *)malloc(digits * sizeof(byte));
     for(byte i = 0; i < digits; i++) {
         if(!values[i]) buf[i] = values[i];
-        else 
+        else {
             if(dot) buf[i] = 1 << (values[i] - 1);
-            else {
-                buf[i] = 0x00;
-                for(int j = 0; j < values[i]; j++) buf[i] |= 1 << j;
-            }
+            else buf[i] = (1 << values[i]) - 1;
+        };
     }
     setDigits(buf, topo);
     free(buf);  
 }
 
 void MAX7219::setMatrix(const byte *values, byte topo) {
-    if(_topology[topo].elementType != MAX7219_MODE_MATRIX) return;
+    _MAX7219_TOPO_TYPE_CHECK(MAX7219_MODE_MATRIX);
 
     setDigits(values, topo);
 }
@@ -297,8 +302,8 @@ void MAX7219::writeRegisters(const word *registers, byte size, byte chip) {
     digitalWrite(_pinLOAD, LOW);
 
     //Datasheet calls for 25ns between LOAD/#CS going low and the start of the
-    //transfer, Arduino can only go as low as 3us
-    delayMicroseconds(5);
+    //transfer, an Arduino running at 20MHz (4MHz faster than the Uno, mind you)
+    //has a clock period of 50ns so no action needed.
 
     for(byte i = 0; i < _chips - (chip + size); i++) injectNoop();
 
@@ -319,7 +324,7 @@ void MAX7219::writeRegisters(const word *registers, byte size, byte chip) {
         Serial.print(" [");
         Serial.print(lowByte(registers[i]), BIN);
         Serial.print("])");
-        if(i < size - 1) Serial.print(", ");      
+        if(i < size - 1) Serial.print(", ");
     }
     Serial.print("} starting at chip ");
     Serial.println(chip);

@@ -287,11 +287,32 @@ class MAX7219
 
         /*
         * Description:
+        *   Displays the givent text on the given topology element using the
+        *   specified font that starts at character fontStart. Intended for use
+        *   with 14- and 16-segment displays.
+        * Parameters:
+        *   text - <any character that font provides>. Depending on the topology
+        *          element type, characters such as "." (period) or "'"
+        *          (apostrophe) may display as stand-alone glyphs or may be
+        *          rendered by DPs in adjacent digits. If that is the case, by
+        *          display industry convention, a period displays on the
+        *          previous character and an apostrophe on the next.
+        *   topo - topology element to update.
+        *   font - a pointer to an array of words containing the font to be
+        *          used, assumed to reside in FLASH.
+        *   fcif - the first character described by the font, used as a base
+        *          offset against all characters in text.
+        */
+        void setFromFont(const char *text, byte topo, const word *font,
+                         char fcif);
+
+        /*
+        * Description:
         *   Displays the given text on the given topology element, previously
         *   configured as a 16-segment display.
         * Parameters:
-        *   text   - [!-~ ]
-        *   topo   - topology element to update (must be 16-segment)
+        *   text - [!-~ ]
+        *   topo - topology element to update (must be 16-segment)
         */
         void set16Segment(const char *text, byte topo = 0);
 
