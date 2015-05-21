@@ -285,7 +285,7 @@ void MAX7219::setBarGraph(const byte *values, boolean dot, byte topo){
         };
     }
     setDigits(buf, topo);
-    free(buf);  
+    free(buf);
 }
 
 void MAX7219::setMatrix(const byte *values, byte topo) {
