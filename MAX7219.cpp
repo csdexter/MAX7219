@@ -244,16 +244,19 @@ void MAX7219::setFromFont(const char *text, byte topo, const word *font,
     byte *buf;
     word digits, glyph;
 
+    //This is actually half of the MAX7219 digits we need to update -- the rest
+    //are on the chip immediately following this one, on the same positions.
     digits = getDigitCount(topo);
-    buf = (byte *)malloc(digits * sizeof(byte));
-    for(word i = 0; i < digits / 2; i++) {
+    buf = (byte *)malloc(2 * digits * sizeof(byte));
+    for(word i = 0; i < digits; i++) {
         //Fetch the glyph from the font ...
         glyph = pgm_read_word(&font[text[i] - fontStart]);
         //... and render it in the framebuffer.
-        buf[i * 2] = highByte(glyph);
-        buf[i * 2 + 1] = lowByte(glyph);
+        buf[i] = highByte(glyph);
+        buf[digits + i] = lowByte(glyph);
     }
     setDigits(buf, topo);
+    setDigits(&buf[digits], getHalfTopo(topo));
     free(buf);
 };
 
@@ -390,4 +393,16 @@ word MAX7219::getDigitCount(byte topo) {
 void MAX7219::injectNoop(void)  {
     SPI.transfer(MAX7219_REG_NOOP);
     SPI.transfer(0x00);
+};
+
+byte MAX7219::getHalfTopo(byte topo) {
+    //We're looking for a topology element of type MAX7219_MODE_1614HALF located
+    //one chip away from and spanning the exact same digits as topo.
+    for(byte t = topo + 1; t < _elements; t++)
+        if(_topology[t].elementType == MAX7219_MODE_1614HALF &&
+           _topology[t].chipFrom == _topology[topo].chipFrom + 1 &&
+           _topology[t].chipTo == _topology[topo].chipTo + 1 &&
+           _topology[t].digitFrom == _topology[topo].digitFrom &&
+           _topology[t].digitTo == _topology[topo].digitFrom)
+            return t;
 };

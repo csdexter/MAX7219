@@ -2,6 +2,5 @@
 - related to the above, implement spectrum analyzer specifics for bargraph mode (decay, peaks)
 - add HAL support (shift register routing for LOAD/#CS) to the code
 - add SPI arbitrator support
-- add 14-segment font.
 - implement external element controllers, mainly for animations ticked off from loop(). Rotating dash, spinning zero and scanning bargraph come to mind. Blinking cursor (on matrices) also seems like a good candidate.
-- implement rotation for driving opposite polarity displays (i.e. common anode) and those with more than 7 segments per digit.
+- implement rotation for driving opposite polarity displays (i.e. common anode)

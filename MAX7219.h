@@ -129,6 +129,8 @@
 #define MAX7219_MODE_BARGRAPH 0x03
 #define MAX7219_MODE_16SEGMENT 0x04
 #define MAX7219_MODE_14SEGMENT 0x05
+//The other half of a 16/14-segment display
+#define MAX7219_MODE_1614HALF 0x06
 //Don't touch this digit
 #define MAX7219_MODE_OFF 0xFD
 //Don't scan this digit
@@ -292,9 +294,7 @@ class MAX7219
         *   specified font that starts at character fontStart. Intended for use
         *   with 14- and 16-segment displays.
         * Parameters:
-        *   text - <any character that font provides>. Set bit 7 on any
-        *          character whose corresponding digit should have DP on (where
-        *          applicable).
+        *   text - <any character that font provides>
         *   topo - topology element to update.
         *   font - a pointer to an array of words containing the font to be
         *          used, assumed to reside in FLASH.
@@ -319,8 +319,7 @@ class MAX7219
         *   Displays the given text on the given topology element, previously
         *   configured as a 14-segment display.
         * Parameters:
-        *   text - [!-~ ]. Set bit 7 on any character whose corresponding digit
-        *          should have DP on.
+        *   text - [!-~ ]
         *   topo - topology element to update (must be 14-segment)
         */
         void set14Segment(const char *text, byte topo = 0);
@@ -367,22 +366,32 @@ class MAX7219
         *   chip      - chip index to start writing at
         */
         void writeRegisters(const word *registers, byte size, byte chip = 0);
+
         /*
         * Descriptions:
         *   Sets consecutive digits in a topology element to the given raw
         *   values.
         */
         void setDigits(const byte *values, byte topo = 0);
+
         /*
         * Description:
         *   Counts the number of digits spanned by a topology element.
         */
         word getDigitCount(byte topo = 0);
+
         /*
         * Description:
         *   Inserts a NOOP in the data stream.
         */
         void injectNoop(void);
+
+        /*
+        * Description:
+        *   Returns the topology element that is the "other half" of the passed
+        *   one. Use by 16/14 segment displays only.
+        */
+        byte getHalfTopo(byte topo = 0);
 };
 
 #endif

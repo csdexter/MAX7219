@@ -43,8 +43,9 @@ HARDWARE NOTES:
    MAX7219/7221 -> LEDs:
      for 7 segment  -> digit 0 is the leftmost one (MSB) and digit 7 is the
                        rightmost (LSB)
-     for 16 segment -> digits 0 and 1 are the leftmost one (MSB), digits 6 and 7
-                       are the rightmost (LSB)
+     for 16 segment -> digit 0 on chips 0 and 1 is the leftmost display (MSB),
+                       digit 7 on chips 0 and 1 is the rightmost display (LSB)
+     for 14 segment -> as for 16-segment, above
      for bar graph  -> column 0 is the leftmost one, dot 1 (the one that lights
                        up when you write a value of 1 or when you call
                        zeroDisplay()) is the bottom one (wired to SEGG)
