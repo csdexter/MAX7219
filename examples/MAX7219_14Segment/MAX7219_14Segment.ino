@@ -24,10 +24,6 @@
 *
 * 14 SEGMENT WIRING DIAGRAM:
 * For those of you who appreciate images more than words, here it goes:
-* // C0/D0/DP=>DP1, C0/D0/A=>A, C0/D0/B=>B, C0/D0/C=>C, C0/D0/D=>D, C0/D0/E=>E,
-// C0/D0/F=>F, C0/D0/G=>G1, C1/D0/DP=>DP2, C1/D0/A=>G2, C1/D0/B=>H, C1/D0/C=>I,
-// C1/D0/D=>J, C1/D0/E=>K, C1/D0/F=>L, C1/D0/G=>M.
-
 *
 * <> /-------\    DP2 and A                  / DP1 to DP           / DP2 to DP
 *    |\  ^  /|                      1st chip | A to A     2nd chip | G2 to A
