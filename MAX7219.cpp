@@ -33,6 +33,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+//#define MAX7219_DEBUG 1
+
 #include "MAX7219.h"
 #include "MAX7219-private.h"
 
@@ -162,13 +164,14 @@ void MAX7219::zeroDisplay(byte topo) {
             memset((void *)&buf[1], 0x00, (digits - 1) * sizeof(byte));
             //... and display a single pixel in the corner.
             buf[0] = 0x01;
+            setMatrix(buf, topo);
             break;
         case MAX7219_MODE_BARGRAPH:
             //Display a line across the bottom of all bargraph columns.
             memset((void *)buf, 0x01, digits * sizeof(byte));
+            setBarGraph(buf, topo);
             break;
     }
-    setDigits(buf, topo);
     free(buf);
 }
 
@@ -313,6 +316,9 @@ void MAX7219::writeRegister(byte addr, byte value, byte chip) {
 
 void MAX7219::writeRegisters(const word *registers, byte size, byte chip) {
     digitalWrite(_pinLOAD, LOW);
+#if defined(MAX7219_DEBUG)
+    Serial.print("SPIW: ");
+#endif
 
     //Datasheet calls for 25ns between LOAD/#CS going low and the start of the
     //transfer, an Arduino running at 20MHz (4MHz faster than the Uno, mind you)
@@ -323,11 +329,18 @@ void MAX7219::writeRegisters(const word *registers, byte size, byte chip) {
     for(byte i = size; i > 0; i--) {
         SPI.transfer(highByte(registers[i - 1]));
         SPI.transfer(lowByte(registers[i - 1]));
+#if defined(MAX7219_DEBUG)
+        Serial.print(highByte(registers[i - 1]), HEX);
+        Serial.print(",");
+        Serial.print(lowByte(registers[i - 1]), HEX);
+        Serial.print(" ");
+#endif
     }
     for(byte i = 0; i < chip; i++) injectNoop();
 
     digitalWrite(_pinLOAD, HIGH);
 #if defined(MAX7219_DEBUG)
+    Serial.println();
     Serial.print("Wrote (register, value) pairs {");
     for(word i = 0; i < size; i++) {
         Serial.print("(0x");
@@ -367,11 +380,11 @@ void MAX7219::setDigits(const byte *values, byte topo) {
 
     for (word i = 0; i < transfers; i++) {
         for(byte j = 0; j < chips; j++)
-            if(i < (j == _topology[topo].chipFrom ? 
-                    7 - _topology[topo].digitFrom + 1 : 
-                    (j == _topology[topo].chipTo ? 
+            if(i < (j == _topology[topo].chipFrom ?
+                    7 - _topology[topo].digitFrom + 1 :
+                    (j == _topology[topo].chipTo ?
                      _topology[topo].digitTo + 1 : 8)))
-                buf[j] = word(MAX7219_REG_DIGIT0 + 
+                buf[j] = word(MAX7219_REG_DIGIT0 +
                               (j ? i : _topology[topo].digitFrom + i),
                               values[(transfers - 1) * j + i]);
             else
@@ -393,6 +406,9 @@ word MAX7219::getDigitCount(byte topo) {
 void MAX7219::injectNoop(void)  {
     SPI.transfer(MAX7219_REG_NOOP);
     SPI.transfer(0x00);
+#if defined(MAX7219_DEBUG)
+    Serial.print("NOP ");
+#endif
 };
 
 byte MAX7219::getHalfTopo(byte topo) {
