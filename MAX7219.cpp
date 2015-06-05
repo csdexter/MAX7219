@@ -88,19 +88,19 @@ void MAX7219::begin(const MAX7219_Topology *topology, const byte length) {
                   MAX7219_CHIP_ALL);
     noShutdown(MAX7219_CHIP_ALL);
 
-    for(int i = 0; i < _elements; i++) {
+    for(byte i = 0; i < _elements; i++) {
         if(_topology[i].elementType == MAX7219_MODE_NC)
             setScanLimit(_topology[i].digitFrom - 1, _topology[i].chipFrom);
         if(_topology[i].elementType == MAX7219_MODE_7SEGMENT)
-            for(int j = 0; j < _topology[i].chipTo - _topology[i].chipFrom +
-                1; j++) {
+            for(byte j = _topology[i].chipFrom; j < _topology[i].chipTo + 1;
+                j++) {
                 byte decodemask = 0;
-
-                for(int k = (j == _topology[i].chipFrom ?
-                             _topology[i].digitFrom : 0);
-                     k <= (j == _topology[i].chipTo ? 
-                          _topology[i].digitTo : 7); k++)
-                    decodemask |= MAX7219_FLG_DIGIT0_CODEB << k;
+                for(byte k = (j == _topology[i].chipFrom ?
+                              _topology[i].digitFrom : 0);
+                    k <= (j == _topology[i].chipTo ? _topology[i].digitTo : 7);
+                    k++) {
+                    decodemask |= (MAX7219_FLG_DIGIT0_CODEB << k);
+                }
                 writeRegister(MAX7219_REG_DECODEMODE, decodemask, j);
             }
         clearDisplay(i);
