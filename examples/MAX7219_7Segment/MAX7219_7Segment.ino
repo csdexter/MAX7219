@@ -31,7 +31,7 @@
 #define _MAX7219_DEMO_DIGITS 4
 
 const MAX7219_Topology topology[] = {{MAX7219_MODE_7SEGMENT, 0, 0, 0, 3},
-                                     {MAX7219_MODE_NC, 0, 4, 0, 7}};
+                                     {MAX7219_MODE_OFF, 0, 4, 0, 7}};
 const char alphabet[] PROGMEM = "0123456789-EHLP ";
 /* we always wait a bit between updates of the display */
 const byte delaytime = 250;
@@ -39,7 +39,7 @@ const byte delaytime = 250;
 MAX7219 maxled;
 
 void setup() {
-  maxled.begin(topology, 2);
+  maxled.begin(topology, sizeof(topology) / sizeof(MAX7219_Topology));
   maxled.zeroDisplay();
 }
 

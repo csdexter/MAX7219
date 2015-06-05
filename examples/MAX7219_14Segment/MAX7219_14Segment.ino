@@ -55,9 +55,9 @@
 #define _MAX7219_DEMO_DIGITS 2
 
 const MAX7219_Topology topology[] = {{MAX7219_MODE_14SEGMENT, 0, 0, 0, 3},
-                                     {MAX7219_MODE_NC, 0, 4, 0, 7},
+                                     {MAX7219_MODE_OFF, 0, 4, 0, 7},
                                      {MAX7219_MODE_1614HALF, 1, 0, 1, 3},
-                                     {MAX7219_MODE_NC, 1, 4, 1, 7}};
+                                     {MAX7219_MODE_OFF, 1, 4, 1, 7}};
 const char alphabet[] PROGMEM = "0123456789ABCDEabcdeVWXYZvwxyz ";
 /* we always wait a bit between updates of the display */
 const byte delaytime = 250;

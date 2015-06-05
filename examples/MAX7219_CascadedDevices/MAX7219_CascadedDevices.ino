@@ -78,7 +78,7 @@ const byte delaytime = 250;
 MAX7219 maxled;
 
 void setup() {
-  maxled.begin(topology, 5);
+  maxled.begin(topology, sizeof(topology) / sizeof(MAX7219_Topology));
   maxled.zeroDisplay(THE_7SEGMENT);
   maxled.zeroDisplay(THE_BARGRAPH);
   maxled.zeroDisplay(THE_MATRIX);

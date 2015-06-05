@@ -43,14 +43,14 @@
 #include <MAX7219.h>
 
 const MAX7219_Topology topology[] = {{MAX7219_MODE_BARGRAPH, 0, 0, 0, 3},
-                                     {MAX7219_MODE_NC, 0, 4, 0, 7}};
+                                     {MAX7219_MODE_OFF, 0, 4, 0, 7}};
 /* we always wait a bit between updates of the display */
 const byte delaytime = 125;
 
 MAX7219 maxled;
 
 void setup() {
-  maxled.begin(topology, 2);
+  maxled.begin(topology, sizeof(topology) / sizeof(MAX7219_Topology));
   maxled.zeroDisplay();
 }
 
