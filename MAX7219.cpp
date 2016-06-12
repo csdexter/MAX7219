@@ -386,7 +386,7 @@ void MAX7219::setDigits(const byte *values, byte topo) {
                      _topology[topo].digitTo + 1 : 8)))
                 buf[j] = word(MAX7219_REG_DIGIT0 +
                               (j ? i : _topology[topo].digitFrom + i),
-                              values[(transfers - 1) * j + i]);
+                              values[transfers * j + i]);
             else
                 buf[j] = word(MAX7219_REG_NOOP, 0x00);
         writeRegisters(buf, chips, _topology[topo].chipFrom);
